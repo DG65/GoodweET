@@ -244,7 +244,7 @@ class GoodweET extends IPSModule
 
         $host = $this->ReadPropertyString('Host');
         if ($host === '') {
-            $this->SetStatus(101);
+            $this->SetStatus(104);
             $this->SetTimerInterval('FastTimer', 0);
             $this->SetTimerInterval('SlowTimer', 0);
             return;

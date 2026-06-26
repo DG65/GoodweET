@@ -121,7 +121,7 @@
   ],
   "status": [
     {
-      "code": 101,
+      "code": 104,
       "icon": "inactive",
       "caption": "Bitte IP-Adresse des Wechselrichters eintragen."
     },
