@@ -143,7 +143,7 @@ class GoodweRegisterMap
         ['e_charge_total', 'Bat. Laden Gesamt',   'F', '~Electricity', 10, true,  'energy'],
         ['e_disch_day',    'Bat. Entl. Heute',    'F', '~Electricity', 10, true,  'energy'],
         ['e_disch_total',  'Bat. Entl. Gesamt',   'F', '~Electricity', 10, true,  'energy'],
-        ['work_hours',     'Betriebsstunden',     'F', '~Duration.hms', 3600, false, 'energy'],
+        ['work_hours',     'Betriebsstunden',     'F', '', 3600, false, 'energy'],
     ];
 
     const VARS_METER = [

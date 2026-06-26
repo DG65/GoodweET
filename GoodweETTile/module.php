@@ -90,7 +90,7 @@ class GoodweETTile extends IPSModule
             }
             $this->SetStatus(102);
         } else {
-            $this->SetStatus(104);
+            $this->SetStatus(201);
         }
 
         $this->UpdateVisualizationValue($this->BuildPayload());
