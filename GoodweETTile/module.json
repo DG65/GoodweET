@@ -1,0 +1,14 @@
+{
+  "id": "{3E8A1D5C-9F2B-4C7A-6E3D-1B5F8A2C4E7D}",
+  "name": "GoodweETTile",
+  "type": 3,
+  "vendor": "GoodWe",
+  "aliases": [
+    "GoodWe ET Kachel"
+  ],
+  "url": "https://github.com/DG65/GoodweET",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "GWETTILE"
+}

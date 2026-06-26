@@ -1,0 +1,12 @@
+{
+  "id": "{A3E1F7C2-5B8D-4A9E-2C6F-8B3D5E7A1C4F}",
+  "author": "Dietmar Gureth",
+  "name": "GoodWe ET for IP-Symcon",
+  "url": "https://github.com/DG65/GoodweET",
+  "compatibility": {
+    "version": "9.0"
+  },
+  "version": "1.0.0",
+  "build": 20260626,
+  "date": 1782518400
+}

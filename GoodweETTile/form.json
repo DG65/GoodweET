@@ -1,0 +1,96 @@
+{
+  "elements": [
+    {
+      "type": "ExpansionPanel",
+      "caption": "Datenquelle",
+      "expanded": true,
+      "items": [
+        {
+          "type": "SelectModule",
+          "name": "SourceInstance",
+          "caption": "GoodweET-Instanz",
+          "moduleID": "{1C4B7E2A-8F3D-5A9C-4E1B-7D2F9A3C6E8B}"
+        }
+      ]
+    },
+    {
+      "type": "ExpansionPanel",
+      "caption": "Darstellung",
+      "expanded": false,
+      "items": [
+        {
+          "type": "CheckBox",
+          "name": "ShowControls",
+          "caption": "Steuerbuttons anzeigen (Work Mode, EMS, Cloud)"
+        },
+        {
+          "type": "Label",
+          "caption": "Farben (-1 = Systemstandard)"
+        },
+        {
+          "type": "ColorEditor",
+          "name": "ColorAccent",
+          "caption": "Akzentfarbe (Standard: Solar-Orange #F5A623)"
+        },
+        {
+          "type": "ColorEditor",
+          "name": "ColorBackground",
+          "caption": "Hintergrundfarbe"
+        },
+        {
+          "type": "ColorEditor",
+          "name": "ColorBox",
+          "caption": "Box-Farbe"
+        },
+        {
+          "type": "ColorEditor",
+          "name": "ColorText",
+          "caption": "Textfarbe"
+        },
+        {
+          "type": "ColorEditor",
+          "name": "ColorTextMuted",
+          "caption": "Gedämpfte Textfarbe"
+        },
+        {
+          "type": "ValidationTextBox",
+          "name": "FontFamily",
+          "caption": "Schriftart (leer = Systemschrift)"
+        },
+        {
+          "type": "NumberSpinner",
+          "name": "FontScale",
+          "caption": "Schriftgröße (Faktor)",
+          "digits": 2,
+          "minimum": 0.5,
+          "maximum": 3.0,
+          "suffix": "×"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Stil zurücksetzen",
+      "onClick": "GWETTILE_ResetStyle($id);"
+    }
+  ],
+  "status": [
+    {
+      "code": 101,
+      "icon": "inactive",
+      "caption": "Bitte GoodweET-Instanz auswählen."
+    },
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "Kachel aktiv."
+    },
+    {
+      "code": 104,
+      "icon": "error",
+      "caption": "Quell-Instanz nicht gefunden."
+    }
+  ]
+}

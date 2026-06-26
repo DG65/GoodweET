@@ -1,0 +1,14 @@
+{
+  "id": "{1C4B7E2A-8F3D-5A9C-4E1B-7D2F9A3C6E8B}",
+  "name": "GoodweET",
+  "type": 3,
+  "vendor": "GoodWe",
+  "aliases": [
+    "GoodWe ET Wechselrichter"
+  ],
+  "url": "https://github.com/DG65/GoodweET",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "GWET"
+}

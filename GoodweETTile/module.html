@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --accent: #f5a623;
+    --box: rgba(255,255,255,0.06);
+    --text: inherit;
+    --textmuted: rgba(128,128,128,0.85);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --scale: 1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    font-size: calc(13px * var(--scale));
+    background: transparent;
+    color: var(--text);
+    padding: 50px 18px 16px;
+    user-select: none;
+    min-height: 100%;
+  }
+
+  /* ── Status-Zeile (oben, über dem Tile-Header) ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: calc(11px * var(--scale));
+    color: var(--textmuted);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--textmuted);
+    flex-shrink: 0;
+  }
+  .status-dot.ok { background: var(--accent); }
+  .status-dot.pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+  .state-label {
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 4px;
+  }
+
+  /* ── Energie-Fluss SVG ── */
+  .flow-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 10px;
+  }
+  .flow-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .flow-label {
+    font-size: calc(10px * var(--scale));
+    fill: var(--textmuted);
+  }
+  .flow-value {
+    font-size: calc(13px * var(--scale));
+    font-weight: 700;
+    fill: var(--text);
+  }
+
+  /* Pfad-Animationen */
+  .flow-path {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: 0;
+  }
+  .flow-path.active { opacity: 1; }
+
+  /* Teilchen auf Pfaden */
+  .particle {
+    r: 3.5;
+    opacity: 0;
+  }
+  .particle.active { opacity: 0.9; }
+
+  @keyframes move-pv-bat  { from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes move-pv-grid { from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes move-pv-house{ from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes move-bat-house{ from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes move-grid-house{ from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes move-house-bat{ from { offset-distance: 0% } to { offset-distance: 100% } }
+
+  /* ── SOC-Ringe (Bat1 + Bat2) ── */
+  .soc-rings {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .soc-ring-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .soc-ring-wrap svg { overflow: visible; }
+  .soc-track { fill: none; stroke: rgba(128,128,128,0.2); stroke-width: 5; }
+  .soc-arc   { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+  .soc-arc.bat2 { stroke: #6ecff6; }
+  .soc-text  { font-size: calc(17px * var(--scale)); font-weight: 800; fill: var(--text); text-anchor: middle; dominant-baseline: central; }
+  .soc-sub   { font-size: calc(9px * var(--scale)); fill: var(--textmuted); text-anchor: middle; dominant-baseline: central; }
+  .soc-ring-label {
+    font-size: calc(10px * var(--scale));
+    color: var(--textmuted);
+    text-align: center;
+  }
+
+  /* ── Info-Boxen (2×3 Grid) ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .info-box {
+    background: var(--box);
+    border-radius: 9px;
+    padding: 7px 8px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .info-box-label {
+    font-size: calc(9px * var(--scale));
+    color: var(--textmuted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .info-box-value {
+    font-size: calc(13px * var(--scale));
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .info-box-value.accent { color: var(--accent); }
+
+  /* ── Steuertasten ── */
+  .controls { display: flex; flex-direction: column; gap: 7px; }
+
+  .ctrl-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .ctrl-label {
+    font-size: calc(10px * var(--scale));
+    color: var(--textmuted);
+    flex: 0 0 70px;
+    text-align: right;
+    padding-right: 4px;
+  }
+
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .btn {
+    background: var(--box);
+    border: 1.5px solid transparent;
+    border-radius: 7px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: calc(11px * var(--scale));
+    padding: 4px 10px;
+    transition: border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn.danger { border-color: #e05050; color: #e05050; }
+
+  /* Internet-Toggle */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle {
+    position: relative;
+    width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: rgba(128,128,128,0.3);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle-slider:before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+  .toggle-label {
+    font-size: calc(11px * var(--scale));
+    color: var(--text);
+  }
+  .toggle-sub {
+    font-size: calc(9px * var(--scale));
+    color: var(--textmuted);
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Status -->
+<div class="status-bar">
+  <span class="status-dot" id="dot"></span>
+  <span class="state-label" id="stateLabel">–</span>
+  <span id="tempLabel"></span>
+</div>
+
+<!-- Energiefluss SVG -->
+<div class="flow-wrap">
+<svg class="flow-svg" viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: var(--font); }
+    </style>
+
+    <!-- Pfad-Definitionen für Teilchen-Animation -->
+    <!-- PV → Mitte -->
+    <path id="p-pv-c"   d="M140,20 L140,90"  />
+    <!-- Mitte → Bat  -->
+    <path id="p-c-bat"  d="M140,90 L50,130"  />
+    <!-- Bat  → Mitte -->
+    <path id="p-bat-c"  d="M50,130 L140,90"  />
+    <!-- Mitte → Grid -->
+    <path id="p-c-grid" d="M140,90 L230,130" />
+    <!-- Grid → Mitte -->
+    <path id="p-grid-c" d="M230,130 L140,90" />
+    <!-- Mitte → Haus -->
+    <path id="p-c-house" d="M140,90 L140,175" />
+  </defs>
+
+  <!-- ── Verbindungslinien (immer sichtbar, gedimmt) ── -->
+  <line x1="140" y1="20"  x2="140" y2="90"  stroke="rgba(128,128,128,0.15)" stroke-width="2"/>
+  <line x1="140" y1="90"  x2="50"  y2="130" stroke="rgba(128,128,128,0.15)" stroke-width="2"/>
+  <line x1="140" y1="90"  x2="230" y2="130" stroke="rgba(128,128,128,0.15)" stroke-width="2"/>
+  <line x1="140" y1="90"  x2="140" y2="175" stroke="rgba(128,128,128,0.15)" stroke-width="2"/>
+
+  <!-- ── Aktive Fluss-Linien ── -->
+  <!-- PV → WR -->
+  <line id="fl-pv"   x1="140" y1="20"  x2="140" y2="90"  stroke-width="2.5" stroke-linecap="round" class="flow-path" style="stroke:var(--accent)"/>
+  <!-- WR ↔ Bat -->
+  <line id="fl-bat"  x1="140" y1="90"  x2="50"  y2="130" stroke-width="2.5" stroke-linecap="round" class="flow-path" style="stroke:#6ecff6"/>
+  <!-- WR ↔ Grid -->
+  <line id="fl-grid" x1="140" y1="90"  x2="230" y2="130" stroke-width="2.5" stroke-linecap="round" class="flow-path" style="stroke:#81c784"/>
+  <!-- WR → Haus -->
+  <line id="fl-house" x1="140" y1="90" x2="140" y2="175" stroke-width="2.5" stroke-linecap="round" class="flow-path" style="stroke:#ffb74d"/>
+
+  <!-- ── Teilchen (via JS offset-path) ── -->
+  <circle id="pt-pv"   r="3.5" fill="var(--accent)"  />
+  <circle id="pt-bat"  r="3.5" fill="#6ecff6" />
+  <circle id="pt-grid" r="3.5" fill="#81c784" />
+  <circle id="pt-house" r="3.5" fill="#ffb74d" />
+
+  <!-- ── PV (oben) ── -->
+  <g transform="translate(140,10)">
+    <!-- Sonne-Icon -->
+    <circle r="9" fill="var(--accent)" opacity="0.9"/>
+    <line x1="-13" y1="0"  x2="-10" y2="0"  stroke="var(--accent)" stroke-width="2"/>
+    <line x1="10"  y1="0"  x2="13"  y2="0"  stroke="var(--accent)" stroke-width="2"/>
+    <line x1="0"   y1="-13" x2="0"  y2="-10" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="-9"  y1="-9" x2="-7"  y2="-7" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="7"   y1="-7" x2="9"   y2="-9" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="-9"  y1="9"  x2="-7"  y2="7"  stroke="var(--accent)" stroke-width="2"/>
+    <line x1="7"   y1="7"  x2="9"   y2="9"  stroke="var(--accent)" stroke-width="2"/>
+  </g>
+  <text id="lbl-pv-val"   x="140" y="36" text-anchor="middle" class="flow-value">0 W</text>
+  <text x="140" y="47" text-anchor="middle" class="flow-label">PV</text>
+
+  <!-- ── WR-Mitte ── -->
+  <circle cx="140" cy="90" r="16" fill="var(--box)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+  <text x="140" y="87" text-anchor="middle" style="font-size:8px;fill:var(--textmuted)">GW</text>
+  <text x="140" y="96" text-anchor="middle" style="font-size:7px;fill:var(--textmuted)">29.9k</text>
+
+  <!-- ── Batterie (links) ── -->
+  <g transform="translate(32,118)">
+    <!-- Batterie-Icon -->
+    <rect x="-12" y="-10" width="22" height="18" rx="3" fill="none" stroke="#6ecff6" stroke-width="1.5"/>
+    <rect x="10"  y="-6"  width="4"  height="10" rx="1" fill="#6ecff6" opacity="0.6"/>
+    <rect id="bat-fill" x="-10" y="-8" width="11" height="14" rx="2" fill="#6ecff6" opacity="0.4"/>
+  </g>
+  <text id="lbl-bat-val"  x="50" y="153" text-anchor="middle" class="flow-value">0 W</text>
+  <text id="lbl-bat-mode" x="50" y="163" text-anchor="middle" class="flow-label">–</text>
+
+  <!-- ── Netz (rechts) ── -->
+  <g transform="translate(230,118)">
+    <!-- Stecker-Icon -->
+    <rect x="-12" y="-10" width="24" height="18" rx="3" fill="none" stroke="#81c784" stroke-width="1.5"/>
+    <line x1="-5" y1="-13" x2="-5" y2="-10" stroke="#81c784" stroke-width="2"/>
+    <line x1="5"  y1="-13" x2="5"  y2="-10" stroke="#81c784" stroke-width="2"/>
+  </g>
+  <text id="lbl-grid-val"  x="230" y="153" text-anchor="middle" class="flow-value">0 W</text>
+  <text id="lbl-grid-info" x="230" y="163" text-anchor="middle" class="flow-label">Netz</text>
+
+  <!-- ── Haus (unten) ── -->
+  <g transform="translate(140,183)">
+    <!-- Haus-Icon -->
+    <polygon points="0,-14 14,0 14,14 -14,14 -14,0" fill="none" stroke="#ffb74d" stroke-width="1.5"/>
+    <polygon points="0,-14 -16,2 16,2" fill="none" stroke="#ffb74d" stroke-width="1.5"/>
+    <rect x="-4" y="4" width="8" height="10" rx="1" fill="#ffb74d" opacity="0.4"/>
+  </g>
+  <text id="lbl-house-val" x="140" y="206" text-anchor="middle" class="flow-value">0 W</text>
+  <text x="140" y="216" text-anchor="middle" class="flow-label">Haus</text>
+
+</svg>
+</div>
+
+<!-- SOC-Ringe -->
+<div class="soc-rings">
+  <div class="soc-ring-wrap">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="32" class="soc-track"
+        stroke-dasharray="160" stroke-dashoffset="40"
+        transform="rotate(126 45 45)" />
+      <circle id="arc1" cx="45" cy="45" r="32" class="soc-arc"
+        stroke-dasharray="0 160" stroke-dashoffset="0"
+        transform="rotate(126 45 45)" />
+      <text id="soc1-val" x="45" y="43" class="soc-text">–%</text>
+      <text id="bat1-mode-label" x="45" y="57" class="soc-sub">–</text>
+    </svg>
+    <div class="soc-ring-label">Bat 1</div>
+    <div class="soc-ring-label" id="bat1-power-label" style="color:var(--text);font-weight:700"></div>
+  </div>
+  <div class="soc-ring-wrap">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="32" class="soc-track"
+        stroke-dasharray="160" stroke-dashoffset="40"
+        transform="rotate(126 45 45)" />
+      <circle id="arc2" cx="45" cy="45" r="32" class="soc-arc bat2"
+        stroke-dasharray="0 160" stroke-dashoffset="0"
+        transform="rotate(126 45 45)" />
+      <text id="soc2-val" x="45" y="43" class="soc-text">–%</text>
+      <text id="bat2-mode-label" x="45" y="57" class="soc-sub">–</text>
+    </svg>
+    <div class="soc-ring-label">Bat 2</div>
+    <div class="soc-ring-label" id="bat2-power-label" style="color:var(--text);font-weight:700"></div>
+  </div>
+</div>
+
+<!-- Info-Boxen (Heute-Energie) -->
+<div class="info-grid">
+  <div class="info-box">
+    <div class="info-box-label">PV Heute</div>
+    <div class="info-box-value accent" id="ib-pv-day">–</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Einspeisung</div>
+    <div class="info-box-value" id="ib-sell-day">–</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Bezug</div>
+    <div class="info-box-value" id="ib-buy-day">–</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Verbrauch</div>
+    <div class="info-box-value" id="ib-load-day">–</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Geladen</div>
+    <div class="info-box-value" id="ib-charge-day">–</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Entladen</div>
+    <div class="info-box-value" id="ib-disch-day">–</div>
+  </div>
+</div>
+
+<!-- Steuerung -->
+<div class="controls" id="controls-section">
+
+  <!-- Work Mode -->
+  <div class="ctrl-row">
+    <span class="ctrl-label">Modus</span>
+    <div class="btn-group" id="wm-btns">
+      <button class="btn" data-wm="0" onclick="setWorkMode(0)">SV</button>
+      <button class="btn" data-wm="3" onclick="setWorkMode(3)">Wirt.</button>
+      <button class="btn" data-wm="4" onclick="setWorkMode(4)">Peak</button>
+      <button class="btn" data-wm="2" onclick="setWorkMode(2)">Backup</button>
+    </div>
+  </div>
+
+  <!-- Cloud / Internet -->
+  <div class="ctrl-row">
+    <span class="ctrl-label">Cloud</span>
+    <label class="toggle">
+      <input type="checkbox" id="internetToggle" onchange="setInternet(this.checked)">
+      <span class="toggle-slider"></span>
+    </label>
+    <div>
+      <div class="toggle-label" id="internet-label">–</div>
+      <div class="toggle-sub">Internet-Verbindung</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Hilfsfunktionen ──────────────────────────────────────────────────────────
+
+function fmtW(w) {
+  if (w == null) return '–';
+  const abs = Math.abs(w);
+  if (abs >= 1000) return (w / 1000).toFixed(1) + ' kW';
+  return Math.round(w) + ' W';
+}
+
+function fmtKwh(v) {
+  if (v == null) return '–';
+  return v.toFixed(2) + ' kWh';
+}
+
+function batModeLabel(m) {
+  return ['Stby', 'Lad.', 'Entl.', 'Fault', 'Aus'][m] ?? '–';
+}
+
+// SOC-Ring: 160 Punkte = 270°-Bogen (126° Start)
+function setSocArc(el, pct) {
+  if (pct == null) { el.setAttribute('stroke-dasharray', '0 160'); return; }
+  const arc = Math.max(0, Math.min(1, pct / 100)) * 160;
+  el.setAttribute('stroke-dasharray', arc.toFixed(1) + ' ' + (160 - arc).toFixed(1));
+}
+
+// Teilchen-Animation via CSS offset-path
+let ptAnim = {};
+
+function animateParticle(id, pathId, color, durationMs, reverse) {
+  const pt = document.getElementById(id);
+  const key = id + (reverse ? 'r' : 'f');
+  if (ptAnim[key]) return;
+
+  const pathEl = document.getElementById(pathId);
+  const len = pathEl.getTotalLength();
+
+  pt.style.offsetPath = 'path("' + pathEl.getAttribute('d') + '")';
+  pt.style.offsetDistance = '0%';
+  pt.style.fill = color;
+  pt.style.opacity = '0.9';
+  pt.style.display = '';
+
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    let t = ((ts - start) % durationMs) / durationMs;
+    if (reverse) t = 1 - t;
+    pt.style.offsetDistance = (t * 100).toFixed(1) + '%';
+    ptAnim[key] = requestAnimationFrame(step);
+  }
+  ptAnim[key] = requestAnimationFrame(step);
+}
+
+function stopParticle(id) {
+  ['f','r'].forEach(s => {
+    const key = id + s;
+    if (ptAnim[key]) { cancelAnimationFrame(ptAnim[key]); delete ptAnim[key]; }
+  });
+  const pt = document.getElementById(id);
+  pt.style.opacity = '0';
+}
+
+// ── Haupt-Update ────────────────────────────────────────────────────────────
+
+let _last = {};
+
+function handleMessage(raw) {
+  const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+  // CSS-Variablen setzen
+  const root = document.documentElement;
+  if (d.accent)    root.style.setProperty('--accent', d.accent);
+  if (d.bg)        document.body.style.background = d.bg;
+  if (d.box)       root.style.setProperty('--box', d.box);
+  if (d.text)      root.style.setProperty('--text', d.text);
+  if (d.textmuted) root.style.setProperty('--textmuted', d.textmuted);
+  if (d.font)      root.style.setProperty('--font', d.font);
+  if (d.scale)     root.style.setProperty('--scale', d.scale);
+
+  // Controls
+  document.getElementById('controls-section').classList.toggle('hidden', !d.controls);
+
+  // Status-Zeile
+  const dot = document.getElementById('dot');
+  dot.className = 'status-dot' + (d.ok ? ' ok pulse' : '');
+  document.getElementById('stateLabel').textContent = d.stateLabel ?? '–';
+
+  const tempEl = document.getElementById('tempLabel');
+  tempEl.textContent = d.tempHs != null ? d.tempHs + ' °C' : '';
+
+  if (!d.ok) return;
+
+  // Leistungswerte
+  const pvW   = d.pvW   ?? 0;
+  const batW  = d.batW  ?? 0;
+  const gridW = d.gridW ?? 0;
+  const houseW = d.houseW ?? 0;
+  const bat1W  = d.bat1W ?? 0;
+  const bat2W  = d.bat2W ?? 0;
+
+  // PV-Linie
+  document.getElementById('lbl-pv-val').textContent = fmtW(pvW);
+  setFlowLine('fl-pv', pvW > 50);
+  if (pvW > 50) animateParticle('pt-pv', 'p-pv-c', getComputedStyle(root).getPropertyValue('--accent').trim() || '#f5a623', 1400, false);
+  else stopParticle('pt-pv');
+
+  // Batterie-Linie
+  document.getElementById('lbl-bat-val').textContent = fmtW(Math.abs(batW));
+  document.getElementById('lbl-bat-mode').textContent = batModeLabel(d.bat1Mode);
+  setFlowLine('fl-bat', Math.abs(batW) > 20);
+  if (batW > 20)       animateParticle('pt-bat', 'p-c-bat',  '#6ecff6', 1200, false);  // laden
+  else if (batW < -20) animateParticle('pt-bat', 'p-bat-c',  '#6ecff6', 1200, true);   // entladen (path reverse)
+  else stopParticle('pt-bat');
+
+  // Netz-Linie
+  document.getElementById('lbl-grid-val').textContent = fmtW(Math.abs(gridW));
+  document.getElementById('lbl-grid-info').textContent = gridW > 0 ? 'Einspeis.' : (gridW < 0 ? 'Bezug' : 'Netz');
+  setFlowLine('fl-grid', Math.abs(gridW) > 20);
+  if (gridW > 20)       animateParticle('pt-grid', 'p-c-grid',  '#81c784', 1300, false);
+  else if (gridW < -20) animateParticle('pt-grid', 'p-grid-c',  '#81c784', 1300, true);
+  else stopParticle('pt-grid');
+
+  // Haus-Linie
+  document.getElementById('lbl-house-val').textContent = fmtW(houseW);
+  setFlowLine('fl-house', houseW > 30);
+  if (houseW > 30) animateParticle('pt-house', 'p-c-house', '#ffb74d', 1100, false);
+  else stopParticle('pt-house');
+
+  // SOC-Ringe
+  const soc1 = d.bat1Soc ?? d.soc ?? 0;
+  const soc2 = d.soc ?? 0;  // Bat2 SOC (falls vorhanden gleich soc, sonst separat)
+  setSocArc(document.getElementById('arc1'), soc1);
+  setSocArc(document.getElementById('arc2'), soc2);
+  document.getElementById('soc1-val').textContent = Math.round(soc1) + '%';
+  document.getElementById('soc2-val').textContent = Math.round(soc2) + '%';
+  document.getElementById('bat1-mode-label').textContent = batModeLabel(d.bat1Mode);
+  document.getElementById('bat2-mode-label').textContent = batModeLabel(d.bat2Mode);
+  document.getElementById('bat1-power-label').textContent = fmtW(bat1W);
+  document.getElementById('bat2-power-label').textContent = fmtW(bat2W);
+
+  // Energie Heute
+  document.getElementById('ib-pv-day').textContent    = fmtKwh(d.ePvDay);
+  document.getElementById('ib-sell-day').textContent  = fmtKwh(d.eSellDay);
+  document.getElementById('ib-buy-day').textContent   = fmtKwh(d.eBuyDay);
+  document.getElementById('ib-load-day').textContent  = fmtKwh(d.eLoadDay);
+  document.getElementById('ib-charge-day').textContent= fmtKwh(d.eChargeDay);
+  document.getElementById('ib-disch-day').textContent = fmtKwh(d.eDischDay);
+
+  // Work-Mode Buttons
+  document.querySelectorAll('#wm-btns .btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.wm) === d.workMode);
+  });
+
+  // Internet-Toggle
+  const tog = document.getElementById('internetToggle');
+  // ctlInternet: true = Internet AN (Register 47017 = 0), false = kein Internet (47017 = 1)
+  tog.checked = !!d.ctlInternet;
+  document.getElementById('internet-label').textContent = d.ctlInternet ? 'Verbunden' : 'Getrennt';
+
+  _last = d;
+}
+
+function setFlowLine(id, active) {
+  document.getElementById(id).style.opacity = active ? '1' : '0';
+}
+
+// ── Steuer-Aktionen ─────────────────────────────────────────────────────────
+
+function setWorkMode(mode) {
+  sendValue('work_mode', mode);
+}
+
+function setInternet(connected) {
+  // connected=true → 0 (Internet freigegeben), connected=false → 1 (kein Internet)
+  sendValue('internet', connected ? 0 : 1);
+  document.getElementById('internet-label').textContent = connected ? 'Verbunden' : 'Getrennt';
+}
+
+function sendValue(ident, value) {
+  if (typeof window.sendCommand === 'function') {
+    window.sendCommand(ident, value);
+    return;
+  }
+  // IPS-Kachel API
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sendValue) {
+    window.webkit.messageHandlers.sendValue.postMessage({ ident, value });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "translations": {
+    "de": {
+      "GoodWe ET Wechselrichter": "GoodWe ET Wechselrichter",
+      "IP-Adresse": "IP-Adresse",
+      "TCP-Port": "TCP-Port",
+      "Unit ID (Standard: 247)": "Unit ID (Standard: 247)",
+      "Verbindung testen / Daten sofort lesen": "Verbindung testen / Daten sofort lesen",
+      "Bitte IP-Adresse des Wechselrichters eintragen.": "Bitte IP-Adresse des Wechselrichters eintragen.",
+      "Verbindung aktiv.": "Verbindung aktiv.",
+      "Verbindungsfehler – Wechselrichter nicht erreichbar.": "Verbindungsfehler – Wechselrichter nicht erreichbar."
+    },
+    "en": {
+      "GoodWe ET Wechselrichter": "GoodWe ET Inverter",
+      "IP-Adresse": "IP Address",
+      "TCP-Port": "TCP Port",
+      "Unit ID (Standard: 247)": "Unit ID (default: 247)",
+      "Verbindung testen / Daten sofort lesen": "Test connection / read data now",
+      "Bitte IP-Adresse des Wechselrichters eintragen.": "Please enter the inverter IP address.",
+      "Verbindung aktiv.": "Connection active.",
+      "Verbindungsfehler – Wechselrichter nicht erreichbar.": "Connection error – inverter not reachable."
+    }
+  }
+}
