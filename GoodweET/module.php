@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 // ---------------------------------------------------------------------------
 // GoodweRegisterMap — alle Register-Konstanten und Variablen-Definitionen
 // ---------------------------------------------------------------------------
@@ -204,7 +202,7 @@ class GoodweET extends IPSModule
 {
     private const MODULE_GUID = '{1C4B7E2A-8F3D-5A9C-4E1B-7D2F9A3C6E8B}';
 
-    public function Create(): void
+    public function Create()
     {
         parent::Create();
 
@@ -232,12 +230,12 @@ class GoodweET extends IPSModule
         $this->RegisterAttributeBoolean('DeviceInfoRead', false);
     }
 
-    public function Destroy(): void
+    public function Destroy()
     {
         parent::Destroy();
     }
 
-    public function ApplyChanges(): void
+    public function ApplyChanges()
     {
         parent::ApplyChanges();
 
@@ -262,7 +260,7 @@ class GoodweET extends IPSModule
     // Öffentliche Timer-Methoden
     // -----------------------------------------------------------------------
 
-    public function ReadFast(): void
+    public function ReadFast()
     {
         if (!$this->ReadAttributeBoolean('DeviceInfoRead') && $this->ReadPropertyBoolean('GroupDevice')) {
             $this->ReadDeviceInfo();
@@ -270,7 +268,7 @@ class GoodweET extends IPSModule
         $this->ReadInverterData();
     }
 
-    public function ReadSlow(): void
+    public function ReadSlow()
     {
         $this->ReadEnergyData();
         $this->ReadErrorData();
@@ -280,7 +278,7 @@ class GoodweET extends IPSModule
     // Lese-Methoden
     // -----------------------------------------------------------------------
 
-    private function ReadInverterData(): void
+    private function ReadInverterData()
     {
         $host   = $this->ReadPropertyString('Host');
         $port   = $this->ReadPropertyInteger('Port');
@@ -395,7 +393,7 @@ class GoodweET extends IPSModule
         }
     }
 
-    private function ReadEnergyData(): void
+    private function ReadEnergyData()
     {
         if (!$this->ReadPropertyBoolean('GroupEnergy')) {
             return;
@@ -429,7 +427,7 @@ class GoodweET extends IPSModule
         }
     }
 
-    private function ReadErrorData(): void
+    private function ReadErrorData()
     {
         if (!$this->ReadPropertyBoolean('GroupErrors')) {
             return;
@@ -457,7 +455,7 @@ class GoodweET extends IPSModule
         $this->SetVarStr('err_detail', empty($detail) ? 'OK' : implode(', ', $detail));
     }
 
-    private function ReadDeviceInfo(): void
+    private function ReadDeviceInfo()
     {
         $host   = $this->ReadPropertyString('Host');
         $port   = $this->ReadPropertyInteger('Port');
@@ -479,7 +477,7 @@ class GoodweET extends IPSModule
     // Schreib-Aktionen
     // -----------------------------------------------------------------------
 
-    public function RequestAction(string $Ident, mixed $Value): void
+    public function RequestAction($Ident, $Value)
     {
         $host   = $this->ReadPropertyString('Host');
         $port   = $this->ReadPropertyInteger('Port');
@@ -566,7 +564,7 @@ class GoodweET extends IPSModule
     // Variablen-Registrierung
     // -----------------------------------------------------------------------
 
-    private function RegisterVariables(): void
+    private function RegisterVariables()
     {
         $pos = 0;
         foreach (GoodweRegisterMap::VARS_BASE as $v) {
@@ -599,7 +597,7 @@ class GoodweET extends IPSModule
         }
     }
 
-    private function RegisterVar(array $def, int $pos, bool $withAction): void
+    private function RegisterVar(array $def, int $pos, bool $withAction)
     {
         [$ident, $caption, $type, $profile, , $archive] = $def;
         $vid = @$this->GetIDForIdent($ident);
@@ -627,14 +625,14 @@ class GoodweET extends IPSModule
         }
     }
 
-    private function UnregVarIfExists(string $ident): void
+    private function UnregVarIfExists(string $ident)
     {
         if (@$this->GetIDForIdent($ident)) {
             $this->UnregisterVariable($ident);
         }
     }
 
-    private function SetArchive(int $vid): void
+    private function SetArchive(int $vid)
     {
         $archiveIDs = IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
         if (count($archiveIDs) > 0) {
@@ -647,25 +645,25 @@ class GoodweET extends IPSModule
     // Variable setzen
     // -----------------------------------------------------------------------
 
-    private function SetVarFloat(string $ident, float $value): void
+    private function SetVarFloat(string $ident, float $value)
     {
         $vid = @$this->GetIDForIdent($ident);
         if ($vid) { SetValueFloat($vid, $value); }
     }
 
-    private function SetVarInt(string $ident, int $value): void
+    private function SetVarInt(string $ident, int $value)
     {
         $vid = @$this->GetIDForIdent($ident);
         if ($vid) { SetValueInteger($vid, $value); }
     }
 
-    private function SetVarBool(string $ident, bool $value): void
+    private function SetVarBool(string $ident, bool $value)
     {
         $vid = @$this->GetIDForIdent($ident);
         if ($vid) { SetValueBoolean($vid, $value); }
     }
 
-    private function SetVarStr(string $ident, string $value): void
+    private function SetVarStr(string $ident, string $value)
     {
         $vid = @$this->GetIDForIdent($ident);
         if ($vid) { SetValueString($vid, $value); }
@@ -675,7 +673,7 @@ class GoodweET extends IPSModule
     // Profile
     // -----------------------------------------------------------------------
 
-    private function CreateProfiles(): void
+    private function CreateProfiles()
     {
         $this->CreateProfile('GoodweET.Watt',    VARIABLETYPE_FLOAT,   ' W',  -30000.0, 30000.0, 1.0,  0);
         $this->CreateProfile('GoodweET.Volt',    VARIABLETYPE_FLOAT,   ' V',       0.0,  1000.0, 0.1,  1);
@@ -706,7 +704,7 @@ class GoodweET extends IPSModule
         }
     }
 
-    private function CreateProfile(string $name, int $type, string $suffix, float $min, float $max, float $step, int $digits): void
+    private function CreateProfile(string $name, int $type, string $suffix, float $min, float $max, float $step, int $digits)
     {
         if (!IPS_VariableProfileExists($name)) {
             IPS_CreateVariableProfile($name, $type);
@@ -720,7 +718,7 @@ class GoodweET extends IPSModule
     // Modbus TCP
     // -----------------------------------------------------------------------
 
-    private function modbusRead(string $host, int $port, int $unitId, int $startReg, int $count): ?array
+    private function modbusRead(string $host, int $port, int $unitId, int $startReg, int $count)
     {
         $sock = @fsockopen($host, $port, $errno, $errstr, 3.0);
         if ($sock === false) {
@@ -767,7 +765,7 @@ class GoodweET extends IPSModule
         return $regs;
     }
 
-    private function modbusWriteSingle(string $host, int $port, int $unitId, int $reg, int $value): bool
+    private function modbusWriteSingle(string $host, int $port, int $unitId, int $reg, int $value)
     {
         $sock = @fsockopen($host, $port, $errno, $errstr, 3.0);
         if ($sock === false) { return false; }
@@ -784,7 +782,7 @@ class GoodweET extends IPSModule
         return ($resp !== false && strlen($resp) >= 8 && ord($resp[7]) === 0x06);
     }
 
-    private function modbusWriteMultiple(string $host, int $port, int $unitId, int $startReg, array $values): bool
+    private function modbusWriteMultiple(string $host, int $port, int $unitId, int $startReg, array $values)
     {
         $sock = @fsockopen($host, $port, $errno, $errstr, 3.0);
         if ($sock === false) { return false; }
@@ -811,29 +809,29 @@ class GoodweET extends IPSModule
     // Datentyp-Hilfsfunktionen
     // -----------------------------------------------------------------------
 
-    private function u16(array $regs, int $offset): int
+    private function u16(array $regs, int $offset)
     {
         return isset($regs[$offset]) ? ($regs[$offset] & 0xFFFF) : 0;
     }
 
-    private function s16(array $regs, int $offset): int
+    private function s16(array $regs, int $offset)
     {
         $v = $this->u16($regs, $offset);
         return $v > 32767 ? $v - 65536 : $v;
     }
 
-    private function u32(array $regs, int $offset): int
+    private function u32(array $regs, int $offset)
     {
         return (($this->u16($regs, $offset) << 16) | $this->u16($regs, $offset + 1));
     }
 
-    private function s32(array $regs, int $offset): int
+    private function s32(array $regs, int $offset)
     {
         $v = $this->u32($regs, $offset);
         return $v > 2147483647 ? $v - 4294967296 : $v;
     }
 
-    private function readStr(array $regs, int $offset, int $regCount): string
+    private function readStr(array $regs, int $offset, int $regCount)
     {
         $s = '';
         for ($i = 0; $i < $regCount; $i++) {
@@ -843,7 +841,7 @@ class GoodweET extends IPSModule
         return rtrim($s, "\x00 ");
     }
 
-    private function readFloat(array $regs, int $offset): float
+    private function readFloat(array $regs, int $offset)
     {
         $hi   = $this->u16($regs, $offset);
         $lo   = $this->u16($regs, $offset + 1);
@@ -852,7 +850,7 @@ class GoodweET extends IPSModule
         return (float)($vals[1] ?? 0.0);
     }
 
-    public function GetConfigurationForm(): string
+    public function GetConfigurationForm()
     {
         return file_get_contents(__DIR__ . '/form.json');
     }

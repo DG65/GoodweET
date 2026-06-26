@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+
 
 /**
  * GoodweETTile
@@ -44,7 +44,7 @@ class GoodweETTile extends IPSModule
     private const DEF_FONT       = 'system';
     private const DEF_SCALE      = 1.0;
 
-    public function Create(): void
+    public function Create()
     {
         parent::Create();
 
@@ -61,12 +61,12 @@ class GoodweETTile extends IPSModule
         $this->SetVisualizationType(1);
     }
 
-    public function Destroy(): void
+    public function Destroy()
     {
         parent::Destroy();
     }
 
-    public function ApplyChanges(): void
+    public function ApplyChanges()
     {
         parent::ApplyChanges();
         $this->SetVisualizationType(1);
@@ -96,19 +96,19 @@ class GoodweETTile extends IPSModule
         $this->UpdateVisualizationValue($this->BuildPayload());
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
         if ($Message === VM_UPDATE) {
             $this->UpdateVisualizationValue($this->BuildPayload());
         }
     }
 
-    public function GetConfigurationForm(): string
+    public function GetConfigurationForm()
     {
         return file_get_contents(__DIR__ . '/form.json');
     }
 
-    public function RequestAction(string $Ident, mixed $Value): void
+    public function RequestAction($Ident, $Value)
     {
         $src = $this->ResolveSource();
         if ($src <= 0) {
@@ -134,7 +134,7 @@ class GoodweETTile extends IPSModule
         }
     }
 
-    public function ResetStyle(): void
+    public function ResetStyle()
     {
         $id = $this->InstanceID;
         IPS_SetProperty($id, 'ColorAccent',     self::DEF_ACCENT);
@@ -148,7 +148,7 @@ class GoodweETTile extends IPSModule
         $this->ReloadForm();
     }
 
-    public function GetVisualizationTile(): string
+    public function GetVisualizationTile()
     {
         $html = file_get_contents(__DIR__ . '/module.html');
         $html .= '<script>handleMessage(' . json_encode($this->BuildPayload()) . ');</script>';
@@ -159,7 +159,7 @@ class GoodweETTile extends IPSModule
     // Payload-Aufbau
     // -----------------------------------------------------------------------
 
-    private function BuildPayload(): string
+    private function BuildPayload()
     {
         $style = [
             'accent'    => $this->ColorHex($this->ReadPropertyInteger('ColorAccent'), '#f5a623'),
@@ -180,7 +180,7 @@ class GoodweETTile extends IPSModule
             ]));
         }
 
-        $g = function (string $ident) use ($src): mixed {
+        $g = function($ident) use ($src) {
             $vid = @IPS_GetObjectIDByIdent($ident, $src);
             return ($vid && $vid > 0) ? GetValue($vid) : null;
         };
@@ -248,12 +248,12 @@ class GoodweETTile extends IPSModule
     // Hilfsfunktionen (identisch mit TessieVehicleTile)
     // -----------------------------------------------------------------------
 
-    private function ResolveSource(): int
+    private function ResolveSource()
     {
         return (int)$this->ReadPropertyInteger('SourceInstance');
     }
 
-    private function ColorHex(int $color, string $fallback): string
+    private function ColorHex(int $color, string $fallback)
     {
         if ($color < 0) {
             return $fallback;
@@ -261,12 +261,12 @@ class GoodweETTile extends IPSModule
         return sprintf('#%06x', $color);
     }
 
-    private function ColorOrEmpty(int $color): string
+    private function ColorOrEmpty(int $color)
     {
         return $color < 0 ? '' : sprintf('#%06x', $color);
     }
 
-    private function FontStack(string $family): string
+    private function FontStack(string $family)
     {
         if ($family === 'system' || $family === '') {
             return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -274,7 +274,7 @@ class GoodweETTile extends IPSModule
         return $family;
     }
 
-    private function FontScaleValue(): float
+    private function FontScaleValue()
     {
         $v = (float)$this->ReadPropertyFloat('FontScale');
         return ($v > 0 && $v <= 3.0) ? $v : 1.0;
