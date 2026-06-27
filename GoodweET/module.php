@@ -87,16 +87,26 @@ class GoodweRegisterMap
         ['connected',     'Verbindung',          'B', '~Alert.Reversed',  1,    false, 'basis',   ''],
     ];
 
+    // [ident, caption, type, profile, sf, archive, group, reg, mppt]
     const VARS_PV = [
-        ['pv1_voltage', 'PV1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35103'],
-        ['pv1_current', 'PV1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35104'],
-        ['pv1_power',   'PV1 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35105'],
-        ['pv3_voltage', 'PV3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35111'],
-        ['pv3_current', 'PV3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35112'],
-        ['pv3_power',   'PV3 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35113'],
-        ['pv5_voltage', 'PV5 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35304'],
-        ['pv5_current', 'PV5 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35305'],
-        ['pv5_power',   'PV5 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35341'],
+        ['pv1_voltage', 'PV1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35103', 1],
+        ['pv1_current', 'PV1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35104', 1],
+        ['pv1_power',   'PV1 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35105', 1],
+        ['pv2_voltage', 'PV2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35107', 2],
+        ['pv2_current', 'PV2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35108', 2],
+        ['pv2_power',   'PV2 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35109', 2],
+        ['pv3_voltage', 'PV3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35111', 3],
+        ['pv3_current', 'PV3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35112', 3],
+        ['pv3_power',   'PV3 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35113', 3],
+        ['pv4_voltage', 'PV4 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35115', 4],
+        ['pv4_current', 'PV4 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35116', 4],
+        ['pv4_power',   'PV4 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35117', 4],
+        ['pv5_voltage', 'PV5 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35304', 5],
+        ['pv5_current', 'PV5 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35305', 5],
+        ['pv5_power',   'PV5 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35341', 5],
+        ['pv6_voltage', 'PV6 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35307', 6],
+        ['pv6_current', 'PV6 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35308', 6],
+        ['pv6_power',   'PV6 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35309', 6],
     ];
 
     const VARS_GRID = [
@@ -213,7 +223,12 @@ class GoodweET extends IPSModule
         $this->RegisterPropertyInteger('IntervalFast', 5);
         $this->RegisterPropertyInteger('IntervalSlow', 300);
 
-        $this->RegisterPropertyBoolean('GroupPV',      true);
+        $this->RegisterPropertyBoolean('EnableMPPT1',  true);
+        $this->RegisterPropertyBoolean('EnableMPPT2',  false);
+        $this->RegisterPropertyBoolean('EnableMPPT3',  true);
+        $this->RegisterPropertyBoolean('EnableMPPT4',  false);
+        $this->RegisterPropertyBoolean('EnableMPPT5',  true);
+        $this->RegisterPropertyBoolean('EnableMPPT6',  false);
         $this->RegisterPropertyBoolean('GroupGrid',    true);
         $this->RegisterPropertyBoolean('GroupBat1',    true);
         $this->RegisterPropertyBoolean('GroupBat2',    true);
@@ -310,18 +325,39 @@ class GoodweET extends IPSModule
         $this->SetVarFloat('pv_total', (float)$pvTotPwr);
         $this->SetVarFloat('meter_total', (float)$meterArm);
 
-        // PV-Details
-        if ($this->ReadPropertyBoolean('GroupPV') && $inv !== null) {
-            $this->SetVarFloat('pv1_voltage', $this->u16($inv, 0) / 10.0);
-            $this->SetVarFloat('pv1_current', $this->u16($inv, 1) / 10.0);
-            $this->SetVarFloat('pv1_power',   (float)$this->u32($inv, 2));
-            $this->SetVarFloat('pv3_voltage', $this->u16($inv, 8) / 10.0);
-            $this->SetVarFloat('pv3_current', $this->u16($inv, 9) / 10.0);
-            $this->SetVarFloat('pv3_power',   (float)$this->u32($inv, 10));
-            if ($pvext !== null) {
+        // PV-Details per MPPT
+        if ($inv !== null) {
+            if ($this->ReadPropertyBoolean('EnableMPPT1')) {
+                $this->SetVarFloat('pv1_voltage', $this->u16($inv, 0) / 10.0);
+                $this->SetVarFloat('pv1_current', $this->u16($inv, 1) / 10.0);
+                $this->SetVarFloat('pv1_power',   (float)$this->u32($inv, 2));
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT2')) {
+                $this->SetVarFloat('pv2_voltage', $this->u16($inv, 4) / 10.0);
+                $this->SetVarFloat('pv2_current', $this->u16($inv, 5) / 10.0);
+                $this->SetVarFloat('pv2_power',   (float)$this->u32($inv, 6));
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT3')) {
+                $this->SetVarFloat('pv3_voltage', $this->u16($inv, 8) / 10.0);
+                $this->SetVarFloat('pv3_current', $this->u16($inv, 9) / 10.0);
+                $this->SetVarFloat('pv3_power',   (float)$this->u32($inv, 10));
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT4')) {
+                $this->SetVarFloat('pv4_voltage', $this->u16($inv, 12) / 10.0);
+                $this->SetVarFloat('pv4_current', $this->u16($inv, 13) / 10.0);
+                $this->SetVarFloat('pv4_power',   (float)$this->u32($inv, 14));
+            }
+        }
+        if ($pvext !== null) {
+            if ($this->ReadPropertyBoolean('EnableMPPT5')) {
                 $this->SetVarFloat('pv5_voltage', $this->u16($pvext, 3)  / 10.0);
                 $this->SetVarFloat('pv5_current', $this->u16($pvext, 4)  / 10.0);
                 $this->SetVarFloat('pv5_power',   (float)$this->u16($pvext, 40));
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT6')) {
+                $this->SetVarFloat('pv6_voltage', $this->u16($pvext, 6)  / 10.0);
+                $this->SetVarFloat('pv6_current', $this->u16($pvext, 7)  / 10.0);
+                $this->SetVarFloat('pv6_power',   (float)$this->u32($pvext, 8));
             }
         }
 
@@ -584,10 +620,19 @@ class GoodweET extends IPSModule
             $this->RegisterVar($v, $pos++, false);
         }
 
+        // PV-Variablen per MPPT-Auswahl
+        foreach (GoodweRegisterMap::VARS_PV as $v) {
+            $mppt = $v[8] ?? 0;
+            if ($mppt > 0 && $this->ReadPropertyBoolean('EnableMPPT' . $mppt)) {
+                $this->RegisterVar($v, $pos++, false);
+            } else {
+                $this->UnregVarIfExists($v[0]);
+            }
+        }
+
         $groups = [
-            'GroupPV'      => GoodweRegisterMap::VARS_PV,
             'GroupGrid'    => GoodweRegisterMap::VARS_GRID,
-            'GroupBat1'    => GoodweRegisterMap::VARS_BAT1,
+            'GroupBat1'   => GoodweRegisterMap::VARS_BAT1,
             'GroupBat2'    => GoodweRegisterMap::VARS_BAT2,
             'GroupEnergy'  => GoodweRegisterMap::VARS_ENERGY,
             'GroupMeter'   => GoodweRegisterMap::VARS_METER,

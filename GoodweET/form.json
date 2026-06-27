@@ -60,14 +60,43 @@
           "caption": "Basis-Daten (SOC, Leistungssummen, Work Mode) sind immer aktiv."
         },
         {
+          "type": "Label",
+          "caption": "Aktive MPPT-Eingänge (Spannung, Strom, Leistung je Eingang):"
+        },
+        {
           "type": "CheckBox",
-          "name": "GroupPV",
-          "caption": "PV-Details (PV1, PV3, PV5 – Spannung, Strom, Leistung)"
+          "name": "EnableMPPT1",
+          "caption": "MPPT 1 (PV1)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "EnableMPPT2",
+          "caption": "MPPT 2 (PV2)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "EnableMPPT3",
+          "caption": "MPPT 3 (PV3)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "EnableMPPT4",
+          "caption": "MPPT 4 (PV4)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "EnableMPPT5",
+          "caption": "MPPT 5 (PV5)"
+        },
+        {
+          "type": "CheckBox",
+          "name": "EnableMPPT6",
+          "caption": "MPPT 6 (PV6)"
         },
         {
           "type": "CheckBox",
           "name": "GroupGrid",
-          "caption": "Netz R/S/T (Spannung, Strom, Frequenz, Leistung)"
+          "caption": "Netz L1/L2/L3 (Spannung, Strom, Frequenz, Leistung)"
         },
         {
           "type": "CheckBox",
