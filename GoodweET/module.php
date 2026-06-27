@@ -566,6 +566,19 @@ class GoodweET extends IPSModule
 
     private function RegisterVariables()
     {
+        // Alte Variablen-Idents (R/S/T) aus früheren Versionen entfernen
+        $obsolete = [
+            'grid_r_volt','grid_r_curr','grid_r_freq','grid_r_pwr',
+            'grid_s_volt','grid_s_curr','grid_s_freq','grid_s_pwr',
+            'grid_t_volt','grid_t_curr','grid_t_freq','grid_t_pwr',
+            'mt_r_volt','mt_r_curr','mt_r_pwr',
+            'mt_s_volt','mt_s_curr','mt_s_pwr',
+            'mt_t_volt','mt_t_curr','mt_t_pwr',
+        ];
+        foreach ($obsolete as $ident) {
+            $this->UnregVarIfExists($ident);
+        }
+
         $pos = 0;
         foreach (GoodweRegisterMap::VARS_BASE as $v) {
             $this->RegisterVar($v, $pos++, false);
