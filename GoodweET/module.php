@@ -100,18 +100,18 @@ class GoodweRegisterMap
     ];
 
     const VARS_GRID = [
-        ['grid_r_volt', 'Netz R Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_r_curr', 'Netz R Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_r_freq', 'Netz R Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_r_pwr',  'Netz R Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
-        ['grid_s_volt', 'Netz S Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_s_curr', 'Netz S Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_s_freq', 'Netz S Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_s_pwr',  'Netz S Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
-        ['grid_t_volt', 'Netz T Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_t_curr', 'Netz T Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_t_freq', 'Netz T Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_t_pwr',  'Netz T Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
+        ['grid_l1_volt', 'Netz L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
+        ['grid_l1_curr', 'Netz L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
+        ['grid_l1_freq', 'Netz L1 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
+        ['grid_l1_pwr',  'Netz L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
+        ['grid_l2_volt', 'Netz L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
+        ['grid_l2_curr', 'Netz L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
+        ['grid_l2_freq', 'Netz L2 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
+        ['grid_l2_pwr',  'Netz L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
+        ['grid_l3_volt', 'Netz L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
+        ['grid_l3_curr', 'Netz L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
+        ['grid_l3_freq', 'Netz L3 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
+        ['grid_l3_pwr',  'Netz L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
         ['inv_total',   'Inverter Gesamt', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
     ];
 
@@ -147,15 +147,15 @@ class GoodweRegisterMap
     ];
 
     const VARS_METER = [
-        ['mt_r_volt', 'Meter R Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_s_volt', 'Meter S Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_t_volt', 'Meter T Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_r_curr', 'Meter R Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_s_curr', 'Meter S Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_t_curr', 'Meter T Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_r_pwr',  'Meter R Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
-        ['mt_s_pwr',  'Meter S Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
-        ['mt_t_pwr',  'Meter T Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
+        ['mt_l1_volt', 'Meter L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
+        ['mt_l2_volt', 'Meter L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
+        ['mt_l3_volt', 'Meter L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
+        ['mt_l1_curr', 'Meter L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
+        ['mt_l2_curr', 'Meter L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
+        ['mt_l3_curr', 'Meter L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
+        ['mt_l1_pwr',  'Meter L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
+        ['mt_l2_pwr',  'Meter L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
+        ['mt_l3_pwr',  'Meter L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
         ['mt_e_sell', 'Meter Einsp. Ges.','F', '~Electricity',    1,  true,  'meter'],
         ['mt_e_buy',  'Meter Bezug Ges.', 'F', '~Electricity',    1,  true,  'meter'],
     ];
@@ -327,18 +327,18 @@ class GoodweET extends IPSModule
 
         // Netz R/S/T
         if ($this->ReadPropertyBoolean('GroupGrid') && $inv !== null) {
-            $this->SetVarFloat('grid_r_volt', $this->u16($inv, 18) / 10.0);
-            $this->SetVarFloat('grid_r_curr', $this->u16($inv, 19) / 10.0);
-            $this->SetVarFloat('grid_r_freq', $this->u16($inv, 20) / 100.0);
-            $this->SetVarFloat('grid_r_pwr',  (float)$this->s32($inv, 21));
-            $this->SetVarFloat('grid_s_volt', $this->u16($inv, 23) / 10.0);
-            $this->SetVarFloat('grid_s_curr', $this->u16($inv, 24) / 10.0);
-            $this->SetVarFloat('grid_s_freq', $this->u16($inv, 25) / 100.0);
-            $this->SetVarFloat('grid_s_pwr',  (float)$this->s32($inv, 26));
-            $this->SetVarFloat('grid_t_volt', $this->u16($inv, 28) / 10.0);
-            $this->SetVarFloat('grid_t_curr', $this->u16($inv, 29) / 10.0);
-            $this->SetVarFloat('grid_t_freq', $this->u16($inv, 30) / 100.0);
-            $this->SetVarFloat('grid_t_pwr',  (float)$this->s32($inv, 31));
+            $this->SetVarFloat('grid_l1_volt', $this->u16($inv, 18) / 10.0);
+            $this->SetVarFloat('grid_l1_curr', $this->u16($inv, 19) / 10.0);
+            $this->SetVarFloat('grid_l1_freq', $this->u16($inv, 20) / 100.0);
+            $this->SetVarFloat('grid_l1_pwr',  (float)$this->s32($inv, 21));
+            $this->SetVarFloat('grid_l2_volt', $this->u16($inv, 23) / 10.0);
+            $this->SetVarFloat('grid_l2_curr', $this->u16($inv, 24) / 10.0);
+            $this->SetVarFloat('grid_l2_freq', $this->u16($inv, 25) / 100.0);
+            $this->SetVarFloat('grid_l2_pwr',  (float)$this->s32($inv, 26));
+            $this->SetVarFloat('grid_l3_volt', $this->u16($inv, 28) / 10.0);
+            $this->SetVarFloat('grid_l3_curr', $this->u16($inv, 29) / 10.0);
+            $this->SetVarFloat('grid_l3_freq', $this->u16($inv, 30) / 100.0);
+            $this->SetVarFloat('grid_l3_pwr',  (float)$this->s32($inv, 31));
             $this->SetVarInt('grid_mode',     $this->u16($inv, 33));
             $this->SetVarFloat('inv_total',   (float)$this->s32($inv, 34));
             $this->SetVarFloat('ac_power',    (float)$this->s32($inv, 36));
@@ -381,15 +381,15 @@ class GoodweET extends IPSModule
 
         // Smart Meter
         if ($this->ReadPropertyBoolean('GroupMeter') && $meter !== null) {
-            $this->SetVarFloat('mt_r_pwr',  (float)$this->s32($meter, 0));
-            $this->SetVarFloat('mt_s_pwr',  (float)$this->s32($meter, 2));
-            $this->SetVarFloat('mt_t_pwr',  (float)$this->s32($meter, 4));
-            $this->SetVarFloat('mt_r_volt', $this->u16($meter, 33) / 10.0);
-            $this->SetVarFloat('mt_s_volt', $this->u16($meter, 34) / 10.0);
-            $this->SetVarFloat('mt_t_volt', $this->u16($meter, 35) / 10.0);
-            $this->SetVarFloat('mt_r_curr', $this->u16($meter, 36) / 10.0);
-            $this->SetVarFloat('mt_s_curr', $this->u16($meter, 37) / 10.0);
-            $this->SetVarFloat('mt_t_curr', $this->u16($meter, 38) / 10.0);
+            $this->SetVarFloat('mt_l1_pwr',  (float)$this->s32($meter, 0));
+            $this->SetVarFloat('mt_l2_pwr',  (float)$this->s32($meter, 2));
+            $this->SetVarFloat('mt_l3_pwr',  (float)$this->s32($meter, 4));
+            $this->SetVarFloat('mt_l1_volt', $this->u16($meter, 33) / 10.0);
+            $this->SetVarFloat('mt_l2_volt', $this->u16($meter, 34) / 10.0);
+            $this->SetVarFloat('mt_l3_volt', $this->u16($meter, 35) / 10.0);
+            $this->SetVarFloat('mt_l1_curr', $this->u16($meter, 36) / 10.0);
+            $this->SetVarFloat('mt_l2_curr', $this->u16($meter, 37) / 10.0);
+            $this->SetVarFloat('mt_l3_curr', $this->u16($meter, 38) / 10.0);
         }
     }
 

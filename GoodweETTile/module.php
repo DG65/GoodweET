@@ -21,7 +21,7 @@ class GoodweETTile extends IPSModule
         'pv_total', 'ac_power', 'bat_total_pwr', 'meter_total',
         'bat1_pwr', 'bat1_mode', 'bat1_volt', 'bat1_soc',
         'bat2_pwr', 'bat2_mode', 'bat2_volt',
-        'grid_r_volt', 'grid_r_freq',
+        'grid_l1_volt', 'grid_l1_freq',
         'temp_heatsink',
         'e_pv_day', 'e_sell_day', 'e_buy_day',
         'e_charge_day', 'e_disch_day', 'e_load_day',
@@ -197,8 +197,8 @@ class GoodweETTile extends IPSModule
         $bat1Soc    = (float)($g('bat1_soc') ?? $soc);
         $bat2Pwr    = (float)($g('bat2_pwr') ?? 0);
         $bat2Mode   = (int)($g('bat2_mode') ?? 0);
-        $gridVolt   = (float)($g('grid_r_volt') ?? 0);
-        $gridFreq   = (float)($g('grid_r_freq') ?? 0);
+        $gridVolt   = (float)($g('grid_l1_volt') ?? 0);
+        $gridFreq   = (float)($g('grid_l1_freq') ?? 0);
         $tempHs     = $g('temp_heatsink');
         $ePvDay     = (float)($g('e_pv_day') ?? 0);
         $eSellDay   = (float)($g('e_sell_day') ?? 0);
