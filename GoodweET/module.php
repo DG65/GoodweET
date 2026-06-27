@@ -77,120 +77,121 @@ class GoodweRegisterMap
 
     // [ident, caption, type(F/I/B/S), profile, scaleFactor, archive, group]
     const VARS_BASE = [
-        ['soc',           'SOC',                'F', '~Battery.100',      1,    true,  'basis'],
-        ['work_mode',     'Betriebsmodus',       'I', 'GoodweET.WorkMode', 1,    true,  'basis'],
-        ['grid_mode',     'Netzmodus',           'I', 'GoodweET.GridMode', 1,    false, 'basis'],
-        ['pv_total',      'PV Gesamtleistung',   'F', 'GoodweET.Watt',    1,    true,  'basis'],
-        ['ac_power',      'AC Wirkleistung',     'F', 'GoodweET.Watt',    1,    true,  'basis'],
-        ['bat_total_pwr', 'Bat. Gesamtleistg.',  'F', 'GoodweET.Watt',    1,    true,  'basis'],
-        ['meter_total',   'Netz Leistung',       'F', 'GoodweET.Watt',    1,    true,  'basis'],
-        ['connected',     'Verbindung',          'B', '~Alert.Reversed',   1,    false, 'basis'],
+        // ident              caption                type  profile              sf    arc    group    register
+        ['soc',           'SOC',                'F', '~Battery.100',      1,    true,  'basis'], // ARM 10472
+        ['work_mode',     'Betriebsmodus',       'I', 'GoodweET.WorkMode', 1,    true,  'basis'], // ARM 10407
+        ['grid_mode',     'Netzmodus',           'I', 'GoodweET.GridMode', 1,    false, 'basis'], // DSP 35136
+        ['pv_total',      'PV Gesamtleistung',   'F', 'GoodweET.Watt',    1,    true,  'basis'], // ARM 10412 U32
+        ['ac_power',      'AC Wirkleistung',     'F', 'GoodweET.Watt',    1,    true,  'basis'], // DSP 35139 S32
+        ['bat_total_pwr', 'Bat. Gesamtleistg.',  'F', 'GoodweET.Watt',    1,    true,  'basis'], // Σ Bat1+Bat2
+        ['meter_total',   'Netz Leistung',       'F', 'GoodweET.Watt',    1,    true,  'basis'], // ARM 10418 S32
+        ['connected',     'Verbindung',          'B', '~Alert.Reversed',   1,    false, 'basis'], // intern
     ];
 
     const VARS_PV = [
-        ['pv1_voltage', 'PV1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'],
-        ['pv1_current', 'PV1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'],
-        ['pv1_power',   'PV1 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'],
-        ['pv3_voltage', 'PV3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'],
-        ['pv3_current', 'PV3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'],
-        ['pv3_power',   'PV3 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'],
-        ['pv5_voltage', 'PV5 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'],
-        ['pv5_current', 'PV5 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'],
-        ['pv5_power',   'PV5 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'],
+        ['pv1_voltage', 'PV1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'], // DSP 35103
+        ['pv1_current', 'PV1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'], // DSP 35104
+        ['pv1_power',   'PV1 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'], // DSP 35105 U32
+        ['pv3_voltage', 'PV3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'], // DSP 35111
+        ['pv3_current', 'PV3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'], // DSP 35112
+        ['pv3_power',   'PV3 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'], // DSP 35113 U32
+        ['pv5_voltage', 'PV5 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv'], // DSP 35304
+        ['pv5_current', 'PV5 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv'], // DSP 35305
+        ['pv5_power',   'PV5 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv'], // DSP 35341 (MPPT5)
     ];
 
     const VARS_GRID = [
-        ['grid_l1_volt', 'Netz L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_l1_curr', 'Netz L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_l1_freq', 'Netz L1 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_l1_pwr',  'Netz L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
-        ['grid_l2_volt', 'Netz L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_l2_curr', 'Netz L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_l2_freq', 'Netz L2 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_l2_pwr',  'Netz L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
-        ['grid_l3_volt', 'Netz L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'],
-        ['grid_l3_curr', 'Netz L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'],
-        ['grid_l3_freq', 'Netz L3 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'],
-        ['grid_l3_pwr',  'Netz L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
-        ['inv_total',   'Inverter Gesamt', 'F', 'GoodweET.Watt',   1,  true,  'grid'],
+        ['grid_l1_volt', 'Netz L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'], // DSP 35121
+        ['grid_l1_curr', 'Netz L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'], // DSP 35122
+        ['grid_l1_freq', 'Netz L1 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'], // DSP 35123
+        ['grid_l1_pwr',  'Netz L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'], // DSP 35124 S32
+        ['grid_l2_volt', 'Netz L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'], // DSP 35126
+        ['grid_l2_curr', 'Netz L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'], // DSP 35127
+        ['grid_l2_freq', 'Netz L2 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'], // DSP 35128
+        ['grid_l2_pwr',  'Netz L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'], // DSP 35129 S32
+        ['grid_l3_volt', 'Netz L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'grid'], // DSP 35131
+        ['grid_l3_curr', 'Netz L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'grid'], // DSP 35132
+        ['grid_l3_freq', 'Netz L3 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid'], // DSP 35133
+        ['grid_l3_pwr',  'Netz L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid'], // DSP 35134 S32
+        ['inv_total',    'Inverter Gesamt',   'F', 'GoodweET.Watt',   1,  true,  'grid'], // DSP 35137 S32
     ];
 
     const VARS_BAT1 = [
-        ['bat1_volt', 'Bat.1 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat1'],
-        ['bat1_curr', 'Bat.1 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat1'],
-        ['bat1_pwr',  'Bat.1 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat1'],
-        ['bat1_mode', 'Bat.1 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat1'],
-        ['bat1_soc',  'Bat.1 SOC',      'F', '~Battery.100',     1,  true,  'bat1'],
+        ['bat1_volt', 'Bat.1 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat1'], // DSP 35180
+        ['bat1_curr', 'Bat.1 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat1'], // DSP 35181 S16
+        ['bat1_pwr',  'Bat.1 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat1'], // DSP 35182 S32
+        ['bat1_mode', 'Bat.1 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat1'], // DSP 35184
+        ['bat1_soc',  'Bat.1 SOC',      'F', '~Battery.100',     1,  true,  'bat1'], // ARM 10472
     ];
 
     const VARS_BAT2 = [
-        ['bat2_volt', 'Bat.2 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat2'],
-        ['bat2_curr', 'Bat.2 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat2'],
-        ['bat2_pwr',  'Bat.2 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat2'],
-        ['bat2_mode', 'Bat.2 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat2'],
+        ['bat2_volt', 'Bat.2 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat2'], // DSP 35262
+        ['bat2_curr', 'Bat.2 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat2'], // DSP 35263 S16
+        ['bat2_pwr',  'Bat.2 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat2'], // DSP 35264 S32
+        ['bat2_mode', 'Bat.2 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat2'], // DSP 35266
     ];
 
     const VARS_ENERGY = [
-        ['e_pv_day',       'PV Heute',           'F', '~Electricity', 10, true,  'energy'],
-        ['e_pv_total',     'PV Gesamt',           'F', '~Electricity', 10, true,  'energy'],
-        ['e_sell_day',     'Einspeisung Heute',   'F', '~Electricity', 10, true,  'energy'],
-        ['e_sell_total',   'Einspeisung Gesamt',  'F', '~Electricity', 10, true,  'energy'],
-        ['e_buy_day',      'Bezug Heute',         'F', '~Electricity', 10, true,  'energy'],
-        ['e_buy_total',    'Bezug Gesamt',        'F', '~Electricity', 10, true,  'energy'],
-        ['e_load_day',     'Last Heute',          'F', '~Electricity', 10, true,  'energy'],
-        ['e_load_total',   'Last Gesamt',         'F', '~Electricity', 10, true,  'energy'],
-        ['e_charge_day',   'Bat. Laden Heute',    'F', '~Electricity', 10, true,  'energy'],
-        ['e_charge_total', 'Bat. Laden Gesamt',   'F', '~Electricity', 10, true,  'energy'],
-        ['e_disch_day',    'Bat. Entl. Heute',    'F', '~Electricity', 10, true,  'energy'],
-        ['e_disch_total',  'Bat. Entl. Gesamt',   'F', '~Electricity', 10, true,  'energy'],
-        ['work_hours',     'Betriebsstunden',     'F', '', 3600, false, 'energy'],
+        ['e_pv_day',       'PV Heute',           'F', '~Electricity', 10, true,  'energy'], // DSP 35193 U32
+        ['e_pv_total',     'PV Gesamt',           'F', '~Electricity', 10, true,  'energy'], // DSP 35191 U32
+        ['e_sell_day',     'Einspeisung Heute',   'F', '~Electricity', 10, true,  'energy'], // DSP 35199
+        ['e_sell_total',   'Einspeisung Gesamt',  'F', '~Electricity', 10, true,  'energy'], // DSP 35200 U32
+        ['e_buy_day',      'Bezug Heute',         'F', '~Electricity', 10, true,  'energy'], // DSP 35202
+        ['e_buy_total',    'Bezug Gesamt',        'F', '~Electricity', 10, true,  'energy'], // DSP 35203 U32 (?)
+        ['e_load_day',     'Last Heute',          'F', '~Electricity', 10, true,  'energy'], // DSP 35205
+        ['e_load_total',   'Last Gesamt',         'F', '~Electricity', 10, true,  'energy'], // DSP 35203 U32
+        ['e_charge_day',   'Bat. Laden Heute',    'F', '~Electricity', 10, true,  'energy'], // DSP 35208
+        ['e_charge_total', 'Bat. Laden Gesamt',   'F', '~Electricity', 10, true,  'energy'], // DSP 35206 U32
+        ['e_disch_day',    'Bat. Entl. Heute',    'F', '~Electricity', 10, true,  'energy'], // DSP 35211
+        ['e_disch_total',  'Bat. Entl. Gesamt',   'F', '~Electricity', 10, true,  'energy'], // DSP 35209 U32
+        ['work_hours',     'Betriebsstunden',     'F', '', 3600, false, 'energy'],            // DSP 35197 U32
     ];
 
     const VARS_METER = [
-        ['mt_l1_volt', 'Meter L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_l2_volt', 'Meter L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_l3_volt', 'Meter L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'],
-        ['mt_l1_curr', 'Meter L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_l2_curr', 'Meter L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_l3_curr', 'Meter L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'],
-        ['mt_l1_pwr',  'Meter L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
-        ['mt_l2_pwr',  'Meter L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
-        ['mt_l3_pwr',  'Meter L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'],
-        ['mt_e_sell', 'Meter Einsp. Ges.','F', '~Electricity',    1,  true,  'meter'],
-        ['mt_e_buy',  'Meter Bezug Ges.', 'F', '~Electricity',    1,  true,  'meter'],
+        ['mt_l1_volt', 'Meter L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'], // GM3000 36052
+        ['mt_l2_volt', 'Meter L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'], // GM3000 36053
+        ['mt_l3_volt', 'Meter L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter'], // GM3000 36054
+        ['mt_l1_curr', 'Meter L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'], // GM3000 36055
+        ['mt_l2_curr', 'Meter L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'], // GM3000 36056
+        ['mt_l3_curr', 'Meter L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter'], // GM3000 36057
+        ['mt_l1_pwr',  'Meter L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'], // GM3000 36019 S32
+        ['mt_l2_pwr',  'Meter L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'], // GM3000 36021 S32
+        ['mt_l3_pwr',  'Meter L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter'], // GM3000 36023 S32
+        ['mt_e_sell',  'Meter Einsp. Ges.', 'F', '~Electricity',    1,  true,  'meter'], // GM3000 36015 Float
+        ['mt_e_buy',   'Meter Bezug Ges.',  'F', '~Electricity',    1,  true,  'meter'], // GM3000 36017 Float
     ];
 
     const VARS_TEMP = [
-        ['temp_air',      'Lufttemperatur',  'F', '~Temperature', 10, false, 'temp'],
-        ['temp_module',   'Modultemperatur', 'F', '~Temperature', 10, true,  'temp'],
-        ['temp_heatsink', 'Kuehlkoerper',    'F', '~Temperature', 10, true,  'temp'],
-        ['temp_bms',      'BMS Temperatur',  'F', '~Temperature', 10, true,  'temp'],
+        ['temp_air',      'Lufttemperatur',  'F', '~Temperature', 10, false, 'temp'], // DSP 35174
+        ['temp_module',   'Modultemperatur', 'F', '~Temperature', 10, true,  'temp'], // DSP 35175
+        ['temp_heatsink', 'Kuehlkoerper',    'F', '~Temperature', 10, true,  'temp'], // DSP 35176
+        ['temp_bms',      'BMS Temperatur',  'F', '~Temperature', 10, true,  'temp'], // DSP 35368
     ];
 
     const VARS_ERRORS = [
-        ['warn_code',  'Warncode',      'I', '', 1, true,  'errors'],
-        ['err_msg',    'Fehlercode',    'I', '', 1, true,  'errors'],
-        ['err_detail', 'Fehler Detail', 'S', '', 1, true,  'errors'],
+        ['warn_code',  'Warncode',      'I', '', 1, true,  'errors'], // DSP 32000
+        ['err_msg',    'Fehlercode',    'I', '', 1, true,  'errors'], // DSP 32002
+        ['err_detail', 'Fehler Detail', 'S', '', 1, true,  'errors'], // intern (Bitmasken)
     ];
 
     const VARS_DEVICE = [
-        ['dev_sn',      'Seriennummer', 'S', '', 1, false, 'device'],
-        ['dev_model',   'Modell',       'S', '', 1, false, 'device'],
-        ['dev_rated_w', 'Nennleistung', 'I', '', 1, false, 'device'],
-        ['dev_fw_arm',  'Firmware ARM', 'I', '', 1, false, 'device'],
-        ['dev_fw_dsp',  'Firmware DSP', 'I', '', 1, false, 'device'],
+        ['dev_sn',      'Seriennummer', 'S', '', 1, false, 'device'], // DSP 35003 (8 Reg)
+        ['dev_model',   'Modell',       'S', '', 1, false, 'device'], // DSP 35011 (5 Reg)
+        ['dev_rated_w', 'Nennleistung', 'I', '', 1, false, 'device'], // DSP 35001
+        ['dev_fw_arm',  'Firmware ARM', 'I', '', 1, false, 'device'], // DSP 35019
+        ['dev_fw_dsp',  'Firmware DSP', 'I', '', 1, false, 'device'], // DSP 35016
     ];
 
     const VARS_CONTROL = [
-        ['ctl_work_mode',   'Steuermodus',         'I', 'GoodweET.WorkMode', 1, false, 'control'],
-        ['ctl_feed_enable', 'Einspeisegrenze',      'B', '~Switch',           1, false, 'control'],
-        ['ctl_feed_limit',  'Einspeisung Max. (W)', 'I', '',                  1, false, 'control'],
-        ['ctl_ems_power',   'EMS Leistung (W)',     'I', '',                  1, false, 'control'],
-        ['ctl_soc_min',     'SOC Min. Entladung',   'I', 'GoodweET.Percent',  1, false, 'control'],
-        ['ctl_soc_max',     'SOC Max. Ladung',      'I', 'GoodweET.Percent',  1, false, 'control'],
-        ['ctl_peak_pwr',    'Peak-Shaving (W)',     'I', '',                  1, false, 'control'],
-        ['ctl_internet',    'Cloud-Verbindung',     'B', '~Switch',           1, false, 'control'],
-        ['ctl_restart',     'WR Neustart',          'B', '~Switch',           1, false, 'control'],
+        ['ctl_work_mode',   'Steuermodus',         'I', 'GoodweET.WorkMode', 1, false, 'control'], // RW 47000
+        ['ctl_feed_enable', 'Einspeisegrenze',      'B', '~Switch',           1, false, 'control'], // RW 47509
+        ['ctl_feed_limit',  'Einspeisung Max. (W)', 'I', '',                  1, false, 'control'], // RW 42004 S32
+        ['ctl_ems_power',   'EMS Leistung (W)',     'I', '',                  1, false, 'control'], // RW 42001 U32
+        ['ctl_soc_min',     'SOC Min. Entladung',   'I', 'GoodweET.Percent',  1, false, 'control'], // RW 45356
+        ['ctl_soc_max',     'SOC Max. Ladung',      'I', 'GoodweET.Percent',  1, false, 'control'], // RW 33518
+        ['ctl_peak_pwr',    'Peak-Shaving (W)',     'I', '',                  1, false, 'control'], // RW 47542 U32
+        ['ctl_internet',    'Cloud-Verbindung',     'B', '~Switch',           1, false, 'control'], // RW 47017
+        ['ctl_restart',     'WR Neustart',          'B', '~Switch',           1, false, 'control'], // WO 45220
     ];
 }
 
