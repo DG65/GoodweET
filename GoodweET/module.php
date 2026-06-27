@@ -630,6 +630,10 @@ class GoodweET extends IPSModule
                 break;
         }
 
+        if ($vid) {
+            IPS_SetName($vid, $caption);
+        }
+
         if ($vid && $withAction) {
             $this->EnableAction($ident);
         }
