@@ -415,8 +415,10 @@ class GoodweET extends IPSModule
         $bat2blk = $this->modbusRead($host, $port, $unitId, 35262, 7);
         $pvext   = $this->modbusRead($host, $port, $unitId, 35301, 41);
         $meter   = $this->modbusRead($host, $port, $unitId, 36019, 39);
-        $bms1    = $this->modbusRead($host, $port, $unitId, 47902, 14);  // inkl. Lade-/Entladegrenzen
-        $bms2    = $this->modbusRead($host, $port, $unitId, 47924, 5);
+        // WBMS Bat1+Bat2 in EINEM Block ab Tabellenstart 47900 (count 34).
+        // WICHTIG: ab 47900 lesen, sonst liefern 47908/47909 (SOC/SOH) 0xFFFF!
+        // Bat1 ab Offset 0 (47900), Bat2 ab Offset 18 (47918).
+        $bms     = $this->modbusRead($host, $port, $unitId, 47900, 34);
 
         $ok = ($inv !== null && $bat1blk !== null);
         $this->SetVarBool('connected', $ok);
@@ -436,14 +438,12 @@ class GoodweET extends IPSModule
             $this->SetVarInt('work_mode', $this->u16($wm, 0));
         }
 
-        // SOC aus ARM 10472 (WBMS 47908/47926 liefern auf dieser Firmware
-        // 0xFFFF — das sind Fremd-BMS-Injektionsregister, kein Auslesewert).
-        // Pro-String-SOC ist nicht separat verfügbar → bat1/bat2 = kombiniert.
-        $armSoc = $this->modbusRead($host, $port, $unitId, 10472, 1);
-        $socVal = ($armSoc !== null) ? (float)$this->u16($armSoc, 0) : 0.0;
-        if ($socVal > 100.0) { $socVal = 0.0; }   // 0xFFFF-Schutz
-        $this->SetVarFloat('soc', $socVal);
+        // SOC pro String aus WBMS: Bat1 = Offset 8 (47908), Bat2 = Offset 26 (47926)
         $bat2Active = $this->ReadPropertyBoolean('GroupBat2') && ($bat2blk !== null);
+        $soc1 = ($bms !== null) ? (float)$this->u16($bms, 8)  : 0.0;   // 47908
+        $soc2 = ($bms !== null) ? (float)$this->u16($bms, 26) : 0.0;   // 47926
+        $socVal = $bat2Active ? (($soc1 + $soc2) / 2.0) : $soc1;
+        $this->SetVarFloat('soc', $socVal);
 
         // PV-Details per MPPT (unverändert aus inv/pvext-Block)
         if ($this->ReadPropertyBoolean('EnableMPPT1')) {
@@ -514,21 +514,19 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('bat1_curr', $this->s16($bat1blk, 7)  / 10.0);
             $this->SetVarFloat('bat1_pwr',  (float)$this->s32($bat1blk, 8));
             $this->SetVarInt('bat1_mode',   $this->u16($bat1blk, 10));
-            $this->SetVarFloat('bat1_soc',  $socVal);
-            if ($bms1 !== null) {
-                $soh1 = $this->u16($bms1, 7);                                   // 47909
-                if ($soh1 !== 0xFFFF) { $this->SetVarFloat('bat1_soh', (float)$soh1); }
-                $this->SetVarFloat('bat1_chg_max_a', $this->u16($bms1, 1) / 10.0); // 47903
-                $this->SetVarFloat('bat1_dis_max_a', $this->u16($bms1, 3) / 10.0); // 47905
-                $this->SetVarInt('bat1_bms_warn',  $this->u32($bms1, 9));       // 47911
-                $this->SetVarInt('bat1_bms_alarm', $this->u32($bms1, 11));      // 47913
+            $this->SetVarFloat('bat1_soc',  $soc1);
+            if ($bms !== null) {
+                $this->SetVarFloat('bat1_soh',  (float)$this->u16($bms, 9));       // 47909
+                $this->SetVarFloat('bat1_temp', $this->s16($bms, 10) / 10.0);      // 47910
+                $this->SetVarFloat('bat1_chg_max_a', $this->u16($bms, 3) / 10.0);  // 47903
+                $this->SetVarFloat('bat1_dis_max_a', $this->u16($bms, 5) / 10.0);  // 47905
+                $this->SetVarInt('bat1_bms_warn',  $this->u32($bms, 11));          // 47911
+                $this->SetVarInt('bat1_bms_alarm', $this->u32($bms, 13));          // 47913
             }
-            // Pack-Temp + Zellspannungen aus 37000er-Block (WBMS-Temp 47910 = 0xFFFF)
-            $bdet1 = $this->modbusRead($host, $port, $unitId, 37003, 21);
-            if ($bdet1 !== null) {
-                $this->SetVarFloat('bat1_temp',    $this->s16($bdet1, 0) / 10.0);  // 37003 Pack
-                $this->SetVarInt('bat1_cell_vmax', $this->u16($bdet1, 19));        // 37022
-                $this->SetVarInt('bat1_cell_vmin', $this->u16($bdet1, 20));        // 37023
+            $cells1 = $this->modbusRead($host, $port, $unitId, 37022, 2);
+            if ($cells1 !== null) {
+                $this->SetVarInt('bat1_cell_vmax', $this->u16($cells1, 0));        // 37022
+                $this->SetVarInt('bat1_cell_vmin', $this->u16($cells1, 1));        // 37023
             }
         }
 
@@ -545,16 +543,15 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('bat2_curr', $this->s16($bat2blk, 1)  / 10.0);
             $this->SetVarFloat('bat2_pwr',  (float)$this->s32($bat2blk, 2));
             $this->SetVarInt('bat2_mode',   $this->u16($bat2blk, 4));
-            $this->SetVarFloat('bat2_soc',  $socVal);
-            if ($bms2 !== null) {
-                $soh2 = $this->u16($bms2, 3);                                   // 47927
-                if ($soh2 !== 0xFFFF) { $this->SetVarFloat('bat2_soh', (float)$soh2); }
+            $this->SetVarFloat('bat2_soc',  $soc2);
+            if ($bms !== null) {
+                $this->SetVarFloat('bat2_soh',  (float)$this->u16($bms, 27));      // 47927
+                $this->SetVarFloat('bat2_temp', $this->s16($bms, 28) / 10.0);      // 47928
             }
-            $bdet2 = $this->modbusRead($host, $port, $unitId, 39001, 21);
-            if ($bdet2 !== null) {
-                $this->SetVarFloat('bat2_temp',    $this->s16($bdet2, 0) / 10.0);  // 39001 Pack
-                $this->SetVarInt('bat2_cell_vmax', $this->u16($bdet2, 19));        // 39020
-                $this->SetVarInt('bat2_cell_vmin', $this->u16($bdet2, 20));        // 39021
+            $cells2 = $this->modbusRead($host, $port, $unitId, 39020, 2);
+            if ($cells2 !== null) {
+                $this->SetVarInt('bat2_cell_vmax', $this->u16($cells2, 0));        // 39020
+                $this->SetVarInt('bat2_cell_vmin', $this->u16($cells2, 1));        // 39021
             }
         }
 
@@ -565,23 +562,16 @@ class GoodweET extends IPSModule
 
         // BMS-Lade-/Entladegrenzen → erlaubte Systemleistung (Deckel für ApplySetpoint)
         // P = max. Strom (A) × Batteriespannung (V). Quelle: OpenEMS WBMS 47902-47905.
-        if ($bms1 !== null) {
-            $v1    = $this->u16($bat1blk, 6) / 10.0;     // 35180 Batteriespannung (DSP, zuverlässig)
-            $chgA1 = $this->u16($bms1, 1) / 10.0;        // 47903
-            $disA1 = $this->u16($bms1, 3) / 10.0;        // 47905
-            $chgMaxW = $chgA1 * $v1;
-            $disMaxW = $disA1 * $v1;
+        if ($bms !== null) {
+            // Bat1: Strom 47903/47905 × Spannung 47906 (Offsets 3/5/6)
+            $v1      = $this->u16($bms, 6) / 10.0;
+            $chgMaxW = ($this->u16($bms, 3) / 10.0) * $v1;
+            $disMaxW = ($this->u16($bms, 5) / 10.0) * $v1;
             if ($bat2Active) {
-                // Bat2-Grenzen per +18-Offset (47920/47922) — an Anlage verifizieren
-                $lim2 = $this->modbusRead($host, $port, $unitId, 47920, 4);
-                $v2   = ($bat2blk !== null) ? $this->u16($bat2blk, 0) / 10.0 : $v1;  // 35262
-                if ($lim2 !== null) {
-                    $chgMaxW += ($this->u16($lim2, 1) / 10.0) * $v2;
-                    $disMaxW += ($this->u16($lim2, 3) / 10.0) * $v2;
-                } else {
-                    $chgMaxW *= 2.0;   // symmetrische Strings angenommen
-                    $disMaxW *= 2.0;
-                }
+                // Bat2: 47921/47923 × 47924 (Offsets 21/23/24)
+                $v2 = $this->u16($bms, 24) / 10.0;
+                $chgMaxW += ($this->u16($bms, 21) / 10.0) * $v2;
+                $disMaxW += ($this->u16($bms, 23) / 10.0) * $v2;
             }
             $this->SetVarFloat('bat_charge_max_w',    $chgMaxW);
             $this->SetVarFloat('bat_discharge_max_w', $disMaxW);
