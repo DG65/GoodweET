@@ -125,6 +125,11 @@
         },
         {
           "type": "CheckBox",
+          "name": "GroupBackup",
+          "caption": "Backup / Inselbetrieb (Backup-Leistung, Inselstatus)"
+        },
+        {
+          "type": "CheckBox",
           "name": "GroupErrors",
           "caption": "Fehler- und Warncodes"
         },

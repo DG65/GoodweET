@@ -2,34 +2,44 @@
 
 // ---------------------------------------------------------------------------
 // GoodweRegisterMap — alle Register-Konstanten und Variablen-Definitionen
+// Konsolidiert 2026-06-10 (REGISTER_AUDIT.md): Steuerbank 47505/47511/47512,
+// SOC/SOH aus BMS, Inselstatus, korrigierte Quellen.
 // ---------------------------------------------------------------------------
 
 class GoodweRegisterMap
 {
-    const BLOCK_INVERTER = ['start' => 35103, 'count' => 42];
-    const BLOCK_BAT1     = ['start' => 35174, 'count' => 18];
-    const BLOCK_BAT2     = ['start' => 35262, 'count' => 7];
-    const BLOCK_PV_EXT   = ['start' => 35301, 'count' => 41];
-    const BLOCK_METER    = ['start' => 36019, 'count' => 39];
-    const BLOCK_ARM      = ['start' => 10407, 'count' => 68];
-    const BLOCK_ENERGY   = ['start' => 35191, 'count' => 22];
-    const BLOCK_METER_E  = ['start' => 36015, 'count' => 4];
-    const BLOCK_ERRORS   = ['start' => 32000, 'count' => 17];
-    const BLOCK_DEVICE   = ['start' => 35001, 'count' => 27];
-
-    const REG_WORK_MODE         = 47000;
-    const REG_FEED_POWER_ENABLE = 47509;
-    const REG_FEED_POWER_LIMIT  = 42004;  // >30kW WR: S32, 2 Register
-    const REG_EMS_POWER_MODE    = 42000;
-    const REG_EMS_POWER_SET     = 42001;  // U32, 2 Register
-    const REG_PEAK_SHAVING_PWR  = 47542;  // U32, 2 Register
-    const REG_PEAK_SHAVING_SOC  = 47544;
-    const REG_SOC_MIN           = 45356;
-    const REG_SOC_MAX_CHARGE    = 33518;
-    const REG_START_CHARGE_SOC  = 47531;
-    const REG_STOP_CHARGE_SOC   = 47532;
+    // ── Steuerregister (maßgebliche Live-Bank) ──────────────────────────
+    const REG_WORK_MODE         = 47000;  // grobe Betriebsart (0-5)
+    const REG_EMS_ENABLE        = 47505;  // 2 = EMS-Steuerung aktiv
+    const REG_FEED_POWER_ENABLE = 47509;  // Export Ja/Nein
+    const REG_FEED_POWER_LIMIT  = 47510;  // Export-Limit (W, U16)
+    const REG_EMS_POWER_MODE    = 47511;  // EMS Leistungsmodus (Enum 0-12)
+    const REG_EMS_POWER_SET     = 47512;  // EMS Leistungseinstellung (W, U16, max 34500)
+    const REG_SOC_MIN           = 45356;  // Bat1 Min SOC ONLINE
     const REG_INTERNET_MODE     = 47017;  // 0=mit Internet, 1=ohne Internet
     const REG_RESTART           = 45220;
+
+    // EMS-Leistungssollwert max für GW29.9k-ET: 50 A ≈ 34641 W, gedeckelt
+    // (Register-Doku nennt fälschlich 10000 — gilt nur für kleine WR)
+    const EMS_POWER_MAX         = 34500;
+
+    // ── Intents (vendor-neutrale Nature, vom EMS aufgerufen) ────────────
+    const INTENT_AUTO        = 0;
+    const INTENT_PV_SELFUSE  = 1;
+    const INTENT_GRID_CHARGE = 2;
+    const INTENT_DISCHARGE   = 3;
+    const INTENT_EXPORT      = 4;
+    const INTENT_STANDBY     = 5;
+
+    // Intent → EMS-Leistungsmodus (Register 47511)
+    const INTENT_TO_MODE = [
+        0 => 1,   // AUTO        -> Automatik
+        1 => 2,   // PV_SELFUSE  -> Laden-Solar
+        2 => 4,   // GRID_CHARGE -> AC-Import
+        3 => 3,   // DISCHARGE   -> Entladen+Solar
+        4 => 5,   // EXPORT      -> AC-Export
+        5 => 8,   // STANDBY     -> Bereitschaft
+    ];
 
     const WORK_MODES = [
         0 => 'Selbstverbrauch',
@@ -40,10 +50,28 @@ class GoodweRegisterMap
         5 => 'Erw. Selbstverbrauch',
     ];
 
+    // EMS Leistungsmodus (Register 47511) — aus EMS.json
+    const EMS_MODES = [
+        0  => 'Gestoppt',
+        1  => 'Automatik',
+        2  => 'Laden - Solar',
+        3  => 'Entladen + Solar',
+        4  => 'AC - Import',
+        5  => 'AC - Export',
+        6  => 'Energiesparen',
+        7  => 'Inselbetrieb',
+        8  => 'Batterie - Bereitschaft',
+        9  => 'Stromeinkauf',
+        10 => 'Stromverkauf',
+        11 => 'Batterie - Laden',
+        12 => 'Batterie - Entladen',
+    ];
+
     const BAT_MODES = [
-        0 => 'Standby',
-        1 => 'Laden',
-        2 => 'Entladen',
+        0 => 'No Battery',
+        1 => 'Standby',
+        2 => 'entlädt',
+        3 => 'lädt',
     ];
 
     const GRID_MODES = [
@@ -63,28 +91,17 @@ class GoodweRegisterMap
         18 => 'Inselbetrieb',
     ];
 
-    const GROUP_BASE    = 'basis';
-    const GROUP_PV      = 'pv';
-    const GROUP_GRID    = 'grid';
-    const GROUP_BAT1    = 'bat1';
-    const GROUP_BAT2    = 'bat2';
-    const GROUP_ENERGY  = 'energy';
-    const GROUP_METER   = 'meter';
-    const GROUP_TEMP    = 'temp';
-    const GROUP_ERRORS  = 'errors';
-    const GROUP_DEVICE  = 'device';
-    const GROUP_CONTROL = 'control';
-
     // [ident, caption, type(F/I/B/S), profile, scaleFactor, archive, group, reg]
     const VARS_BASE = [
-        ['soc',           'SOC',                'F', '~Battery.100',      1,    true,  'basis',   'ARM 10472'],
-        ['work_mode',     'Betriebsmodus',       'I', 'GoodweET.WorkMode', 1,    true,  'basis',   'ARM 10407'],
-        ['grid_mode',     'Netzmodus',           'I', 'GoodweET.GridMode', 1,    false, 'basis',   'DSP 35136'],
-        ['pv_total',      'PV Gesamtleistung',   'F', 'GoodweET.Watt',    1,    true,  'basis',   'ARM 10412'],
-        ['ac_power',      'AC Wirkleistung',     'F', 'GoodweET.Watt',    1,    true,  'basis',   'DSP 35139'],
-        ['bat_total_pwr', 'Bat. Gesamtleistg.',  'F', 'GoodweET.Watt',    1,    true,  'basis',   'Σ Bat1+Bat2'],
-        ['meter_total',   'Netz Leistung',       'F', 'GoodweET.Watt',    1,    true,  'basis',   'ARM 10418'],
-        ['connected',     'Verbindung',          'B', '~Alert.Reversed',  1,    false, 'basis',   ''],
+        ['soc',           'SOC',                'F', '~Battery.100',      1, true,  'basis', 'BMS Ø'],
+        ['work_mode',     'Betriebsmodus',       'I', 'GoodweET.WorkMode', 1, true,  'basis', 'RW 47000'],
+        ['grid_mode',     'Netzmodus',           'I', 'GoodweET.GridMode', 1, false, 'basis', 'DSP 35136'],
+        ['island',        'Netzgetrennt (Insel)', 'B', '~Alert',           1, true,  'basis', 'calc'],
+        ['pv_total',      'PV Gesamtleistung',   'F', 'GoodweET.Watt',     1, true,  'basis', 'DSP 35301'],
+        ['ac_power',      'AC Wirkleistung',     'F', 'GoodweET.Watt',     1, true,  'basis', 'DSP 35139'],
+        ['bat_total_pwr', 'Bat. Gesamtleistg.',  'F', 'GoodweET.Watt',     1, true,  'basis', 'Σ Bat1+Bat2'],
+        ['meter_total',   'Netz Leistung',       'F', 'GoodweET.Watt',     1, true,  'basis', 'SM 36025'],
+        ['connected',     'Verbindung',          'B', '~Alert.Reversed',   1, false, 'basis', ''],
     ];
 
     // [ident, caption, type, profile, sf, archive, group, reg, mppt]
@@ -104,8 +121,8 @@ class GoodweRegisterMap
         ['pv5_voltage', 'PV5 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35304', 5],
         ['pv5_current', 'PV5 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35305', 5],
         ['pv5_power',   'PV5 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35341', 5],
-        ['pv6_voltage', 'PV6 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35307', 6],
-        ['pv6_current', 'PV6 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35308', 6],
+        ['pv6_voltage', 'PV6 Spannung', 'F', 'GoodweET.Volt',   10, false, 'pv', 'DSP 35306', 6],
+        ['pv6_current', 'PV6 Strom',    'F', 'GoodweET.Ampere', 10, false, 'pv', 'DSP 35307', 6],
         ['pv6_power',   'PV6 Leistung', 'F', 'GoodweET.Watt',    1, true,  'pv', 'DSP 35309', 6],
     ];
 
@@ -123,58 +140,68 @@ class GoodweRegisterMap
         ['grid_l3_freq', 'Netz L3 Frequenz', 'F', 'GoodweET.Hertz', 100, false, 'grid', 'DSP 35133'],
         ['grid_l3_pwr',  'Netz L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'grid', 'DSP 35134'],
         ['inv_total',    'Inverter Gesamt',   'F', 'GoodweET.Watt',   1,  true,  'grid', 'DSP 35137'],
+        ['grid_freq',    'Netzfrequenz',      'F', 'GoodweET.Hertz', 100, false, 'grid', 'SM 36014'],
     ];
 
     const VARS_BAT1 = [
-        ['bat1_volt', 'Bat.1 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat1', 'DSP 35180'],
-        ['bat1_curr', 'Bat.1 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat1', 'DSP 35181'],
-        ['bat1_pwr',  'Bat.1 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat1', 'DSP 35182'],
-        ['bat1_mode', 'Bat.1 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat1', 'DSP 35184'],
-        ['bat1_soc',  'Bat.1 SOC',      'F', '~Battery.100',     1,  true,  'bat1', 'ARM 10472'],
+        ['bat1_volt',     'Bat.1 Spannung',   'F', 'GoodweET.Volt',     10, false, 'bat1', 'DSP 35180'],
+        ['bat1_curr',     'Bat.1 Strom',      'F', 'GoodweET.Ampere',   10, true,  'bat1', 'DSP 35181'],
+        ['bat1_pwr',      'Bat.1 Leistung',   'F', 'GoodweET.Watt',      1, true,  'bat1', 'DSP 35182'],
+        ['bat1_mode',     'Bat.1 Modus',      'I', 'GoodweET.BatMode',   1, true,  'bat1', 'DSP 35184'],
+        ['bat1_soc',      'Bat.1 SOC',        'F', '~Battery.100',       1, true,  'bat1', 'BMS 47908'],
+        ['bat1_soh',      'Bat.1 SOH',        'F', '~Intensity.100',     1, true,  'bat1', 'BMS 47909'],
+        ['bat1_temp',     'Bat.1 Temperatur', 'F', '~Temperature',      10, true,  'bat1', 'BMS 47910'],
+        ['bat1_cell_vmax','Bat.1 Zellspg max','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37022'],
+        ['bat1_cell_vmin','Bat.1 Zellspg min','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37023'],
     ];
 
     const VARS_BAT2 = [
-        ['bat2_volt', 'Bat.2 Spannung', 'F', 'GoodweET.Volt',    10, false, 'bat2', 'DSP 35262'],
-        ['bat2_curr', 'Bat.2 Strom',    'F', 'GoodweET.Ampere',  10, true,  'bat2', 'DSP 35263'],
-        ['bat2_pwr',  'Bat.2 Leistung', 'F', 'GoodweET.Watt',    1,  true,  'bat2', 'DSP 35264'],
-        ['bat2_mode', 'Bat.2 Modus',    'I', 'GoodweET.BatMode', 1,  true,  'bat2', 'DSP 35266'],
+        ['bat2_volt',     'Bat.2 Spannung',   'F', 'GoodweET.Volt',     10, false, 'bat2', 'DSP 35262'],
+        ['bat2_curr',     'Bat.2 Strom',      'F', 'GoodweET.Ampere',   10, true,  'bat2', 'DSP 35263'],
+        ['bat2_pwr',      'Bat.2 Leistung',   'F', 'GoodweET.Watt',      1, true,  'bat2', 'DSP 35264'],
+        ['bat2_mode',     'Bat.2 Modus',      'I', 'GoodweET.BatMode',   1, true,  'bat2', 'DSP 35266'],
+        ['bat2_soc',      'Bat.2 SOC',        'F', '~Battery.100',       1, true,  'bat2', 'BMS 47926'],
+        ['bat2_soh',      'Bat.2 SOH',        'F', '~Intensity.100',     1, true,  'bat2', 'BMS 47927'],
+        ['bat2_temp',     'Bat.2 Temperatur', 'F', '~Temperature',      10, true,  'bat2', 'BMS 47928'],
+        ['bat2_cell_vmax','Bat.2 Zellspg max','I', 'GoodweET.MilliVolt', 1, false, 'bat2', 'BMS 39020'],
+        ['bat2_cell_vmin','Bat.2 Zellspg min','I', 'GoodweET.MilliVolt', 1, false, 'bat2', 'BMS 39021'],
     ];
 
     const VARS_ENERGY = [
         ['e_pv_day',       'PV Heute',           'F', '~Electricity', 10, true,  'energy', 'DSP 35193'],
         ['e_pv_total',     'PV Gesamt',           'F', '~Electricity', 10, true,  'energy', 'DSP 35191'],
         ['e_sell_day',     'Einspeisung Heute',   'F', '~Electricity', 10, true,  'energy', 'DSP 35199'],
-        ['e_sell_total',   'Einspeisung Gesamt',  'F', '~Electricity', 10, true,  'energy', 'DSP 35200'],
         ['e_buy_day',      'Bezug Heute',         'F', '~Electricity', 10, true,  'energy', 'DSP 35202'],
-        ['e_buy_total',    'Bezug Gesamt',        'F', '~Electricity', 10, true,  'energy', 'DSP 35203'],
         ['e_load_day',     'Last Heute',          'F', '~Electricity', 10, true,  'energy', 'DSP 35205'],
         ['e_load_total',   'Last Gesamt',         'F', '~Electricity', 10, true,  'energy', 'DSP 35203'],
         ['e_charge_day',   'Bat. Laden Heute',    'F', '~Electricity', 10, true,  'energy', 'DSP 35208'],
         ['e_charge_total', 'Bat. Laden Gesamt',   'F', '~Electricity', 10, true,  'energy', 'DSP 35206'],
         ['e_disch_day',    'Bat. Entl. Heute',    'F', '~Electricity', 10, true,  'energy', 'DSP 35211'],
         ['e_disch_total',  'Bat. Entl. Gesamt',   'F', '~Electricity', 10, true,  'energy', 'DSP 35209'],
-        ['work_hours',     'Betriebsstunden',     'F', '', 3600, false, 'energy', 'DSP 35197'],
+        ['work_hours',     'Betriebsstunden',     'F', '',           3600, false, 'energy', 'DSP 35197'],
     ];
 
     const VARS_METER = [
-        ['mt_l1_volt', 'GM3000 L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'GM 36052'],
-        ['mt_l2_volt', 'GM3000 L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'GM 36053'],
-        ['mt_l3_volt', 'GM3000 L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'GM 36054'],
-        ['mt_l1_curr', 'GM3000 L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'GM 36055'],
-        ['mt_l2_curr', 'GM3000 L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'GM 36056'],
-        ['mt_l3_curr', 'GM3000 L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'GM 36057'],
-        ['mt_l1_pwr',  'GM3000 L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'GM 36019'],
-        ['mt_l2_pwr',  'GM3000 L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'GM 36021'],
-        ['mt_l3_pwr',  'GM3000 L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'GM 36023'],
-        ['mt_e_sell',  'GM3000 Einspeisung',  'F', '~Electricity',    1,  true,  'meter', 'GM 36015'],
-        ['mt_e_buy',   'GM3000 Bezug',        'F', '~Electricity',    1,  true,  'meter', 'GM 36017'],
+        ['mt_l1_volt', 'Netz L1 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'SM 36052'],
+        ['mt_l2_volt', 'Netz L2 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'SM 36053'],
+        ['mt_l3_volt', 'Netz L3 Spannung', 'F', 'GoodweET.Volt',   10, false, 'meter', 'SM 36054'],
+        ['mt_l1_curr', 'Netz L1 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'SM 36055'],
+        ['mt_l2_curr', 'Netz L2 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'SM 36056'],
+        ['mt_l3_curr', 'Netz L3 Strom',    'F', 'GoodweET.Ampere', 10, false, 'meter', 'SM 36057'],
+        ['mt_l1_pwr',  'Netz L1 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'SM 36019'],
+        ['mt_l2_pwr',  'Netz L2 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'SM 36021'],
+        ['mt_l3_pwr',  'Netz L3 Leistung', 'F', 'GoodweET.Watt',   1,  true,  'meter', 'SM 36023'],
     ];
 
     const VARS_TEMP = [
         ['temp_air',      'Lufttemperatur',  'F', '~Temperature', 10, false, 'temp', 'DSP 35174'],
         ['temp_module',   'Modultemperatur', 'F', '~Temperature', 10, true,  'temp', 'DSP 35175'],
         ['temp_heatsink', 'Kuehlkoerper',    'F', '~Temperature', 10, true,  'temp', 'DSP 35176'],
-        ['temp_bms',      'BMS Temperatur',  'F', '~Temperature', 10, true,  'temp', 'DSP 35368'],
+    ];
+
+    const VARS_BACKUP = [
+        ['backup_total', 'Backup Leistung',  'F', 'GoodweET.Watt', 1, true,  'backup', 'DSP 35169'],
+        ['backup_active','Backup aktiv',     'B', '~Switch',       1, false, 'backup', 'RW 45252'],
     ];
 
     const VARS_ERRORS = [
@@ -192,20 +219,20 @@ class GoodweRegisterMap
     ];
 
     const VARS_CONTROL = [
-        ['ctl_work_mode',   'Steuermodus',          'I', 'GoodweET.WorkMode', 1, false, 'control', 'RW 47000'],
-        ['ctl_feed_enable', 'Einspeisegrenze',       'B', '~Switch',           1, false, 'control', 'RW 47509'],
-        ['ctl_feed_limit',  'Einspeisung Max. (W)',  'I', '',                  1, false, 'control', 'RW 42004'],
-        ['ctl_ems_power',   'EMS Leistung (W)',      'I', '',                  1, false, 'control', 'RW 42001'],
-        ['ctl_soc_min',     'SOC Min. Entladung',    'I', 'GoodweET.Percent',  1, false, 'control', 'RW 45356'],
-        ['ctl_soc_max',     'SOC Max. Ladung',       'I', 'GoodweET.Percent',  1, false, 'control', 'RW 33518'],
-        ['ctl_peak_pwr',    'Peak-Shaving (W)',      'I', '',                  1, false, 'control', 'RW 47542'],
-        ['ctl_internet',    'Cloud-Verbindung',      'B', '~Switch',           1, false, 'control', 'RW 47017'],
-        ['ctl_restart',     'WR Neustart',           'B', '~Switch',           1, false, 'control', 'WO 45220'],
+        ['ctl_work_mode',     'Steuermodus',          'I', 'GoodweET.WorkMode', 1, false, 'control', 'RW 47000'],
+        ['ctl_ems_enable',    'EMS-Steuerung aktiv',  'B', '~Switch',           1, false, 'control', 'RW 47505'],
+        ['ctl_ems_mode',      'EMS Leistungsmodus',   'I', 'GoodweET.EMSMode',  1, false, 'control', 'RW 47511'],
+        ['ctl_ems_power',     'EMS Leistung (W)',     'I', 'GoodweET.WattEMS',  1, false, 'control', 'RW 47512'],
+        ['ctl_export_enable', 'Einspeisung Ja/Nein',  'B', '~Switch',           1, false, 'control', 'RW 47509'],
+        ['ctl_export_limit',  'Einspeisung Max. (W)', 'I', 'GoodweET.WattEMS',  1, false, 'control', 'RW 47510'],
+        ['ctl_soc_min',       'SOC Min. Entladung',   'I', 'GoodweET.Percent',  1, false, 'control', 'RW 45356'],
+        ['ctl_internet',      'Cloud-Verbindung',     'B', '~Switch',           1, false, 'control', 'RW 47017'],
+        ['ctl_restart',       'WR Neustart',          'B', '~Switch',           1, false, 'control', 'WO 45220'],
     ];
 }
 
 // ---------------------------------------------------------------------------
-// GoodweET — Hauptmodul
+// GoodweET — Hauptmodul (Auslese + Steuerung, Nature für das EMS)
 // ---------------------------------------------------------------------------
 
 class GoodweET extends IPSModule
@@ -235,6 +262,7 @@ class GoodweET extends IPSModule
         $this->RegisterPropertyBoolean('GroupEnergy',  true);
         $this->RegisterPropertyBoolean('GroupMeter',   true);
         $this->RegisterPropertyBoolean('GroupTemp',    true);
+        $this->RegisterPropertyBoolean('GroupBackup',  true);
         $this->RegisterPropertyBoolean('GroupErrors',  true);
         $this->RegisterPropertyBoolean('GroupDevice',  true);
         $this->RegisterPropertyBoolean('GroupControl', true);
@@ -243,6 +271,7 @@ class GoodweET extends IPSModule
         $this->RegisterTimer('SlowTimer', 0, 'GWET_ReadSlow($_IPS[\'TARGET\']);');
 
         $this->RegisterAttributeBoolean('DeviceInfoRead', false);
+        $this->RegisterAttributeInteger('Controller', 0);   // Instanz-ID des steuernden EMS
     }
 
     public function Destroy()
@@ -290,6 +319,73 @@ class GoodweET extends IPSModule
     }
 
     // -----------------------------------------------------------------------
+    // Nature-Schnittstelle (vom EMS aufgerufen)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Setzt den Wechselrichter auf einen vendor-neutralen Intent.
+     * $intent: GoodweRegisterMap::INTENT_* (AUTO/PV_SELFUSE/GRID_CHARGE/
+     *          DISCHARGE/EXPORT/STANDBY)
+     * $watt:   gewünschte Leistung (nur bei GRID_CHARGE relevant), 0..34500
+     * Schreibt realtime auf die EMS-Bank 47505/47511/47512 — KEIN Scheduler.
+     */
+    public function ApplySetpoint(int $intent, int $watt = 0)
+    {
+        $map  = GoodweRegisterMap::INTENT_TO_MODE;
+        $mode = isset($map[$intent]) ? $map[$intent] : 1;
+
+        $host   = $this->ReadPropertyString('Host');
+        $port   = $this->ReadPropertyInteger('Port');
+        $unitId = $this->ReadPropertyInteger('UnitId');
+        if ($host === '') { return false; }
+
+        // EMS-Steuerung scharfschalten (47505 = 2)
+        $this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_ENABLE, 2);
+
+        // Leistungsmodus setzen (47511)
+        $ok = $this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_MODE, $mode);
+        $this->SetVarInt('ctl_ems_mode', $mode);
+
+        // Leistung nur bei Netz-Laden schreiben (47512, U16, gedeckelt)
+        if ($intent === GoodweRegisterMap::INTENT_GRID_CHARGE) {
+            $w = max(0, min(GoodweRegisterMap::EMS_POWER_MAX, $watt));
+            $this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_SET, $w);
+            $this->SetVarInt('ctl_ems_power', $w);
+        }
+
+        $this->SendDebug('ApplySetpoint', "Intent=$intent -> Mode=$mode Watt=$watt", 0);
+        return $ok;
+    }
+
+    /** Gibt die wichtigsten normierten Messwerte als JSON zurück. */
+    public function GetChannels()
+    {
+        $g = function($ident) {
+            $vid = @$this->GetIDForIdent($ident);
+            return $vid ? GetValue($vid) : null;
+        };
+        return json_encode([
+            'soc'        => $g('soc'),
+            'pv_total'   => $g('pv_total'),
+            'grid_total' => $g('meter_total'),
+            'bat_power'  => $g('bat_total_pwr'),
+            'wr_total'   => $g('ac_power'),
+            'island'     => $g('island'),
+            'bat1_soc'   => $g('bat1_soc'),
+            'bat1_soh'   => $g('bat1_soh'),
+            'bat2_soc'   => $g('bat2_soc'),
+            'bat2_soh'   => $g('bat2_soh'),
+        ]);
+    }
+
+    /** Merkt sich die steuernde EMS-Instanz (für Anzeige/Sperren). */
+    public function AttachController(int $emsInstanceId)
+    {
+        $this->WriteAttributeInteger('Controller', $emsInstanceId);
+        return true;
+    }
+
+    // -----------------------------------------------------------------------
     // Lese-Methoden
     // -----------------------------------------------------------------------
 
@@ -304,9 +400,10 @@ class GoodweET extends IPSModule
         $bat2blk = $this->modbusRead($host, $port, $unitId, 35262, 7);
         $pvext   = $this->modbusRead($host, $port, $unitId, 35301, 41);
         $meter   = $this->modbusRead($host, $port, $unitId, 36019, 39);
-        $arm     = $this->modbusRead($host, $port, $unitId, 10407, 68);
+        $bms1    = $this->modbusRead($host, $port, $unitId, 47906, 5);
+        $bms2    = $this->modbusRead($host, $port, $unitId, 47924, 5);
 
-        $ok = ($inv !== null && $bat1blk !== null && $arm !== null);
+        $ok = ($inv !== null && $bat1blk !== null);
         $this->SetVarBool('connected', $ok);
 
         if (!$ok) {
@@ -314,39 +411,43 @@ class GoodweET extends IPSModule
             return;
         }
 
-        // Basis (ARM)
-        $soc      = $this->u16($arm, 65);   // 10472
-        $workMode = $this->u16($arm, 0);    // 10407
-        $pvTotPwr = $this->u32($arm, 5);    // 10412
-        $meterArm = $this->s32($arm, 11);   // 10418
+        // Basis
+        $pvTotal = ($pvext !== null) ? (float)$this->u32($pvext, 0) : 0.0;   // 35301
+        $this->SetVarFloat('pv_total', $pvTotal);
 
-        $this->SetVarFloat('soc', (float)$soc);
-        $this->SetVarInt('work_mode', $workMode);
-        $this->SetVarFloat('pv_total', (float)$pvTotPwr);
-        $this->SetVarFloat('meter_total', (float)$meterArm);
+        // Betriebsmodus (Register 47000)
+        $wm = $this->modbusRead($host, $port, $unitId, 47000, 1);
+        if ($wm !== null) {
+            $this->SetVarInt('work_mode', $this->u16($wm, 0));
+        }
 
-        // PV-Details per MPPT
-        if ($inv !== null) {
-            if ($this->ReadPropertyBoolean('EnableMPPT1')) {
-                $this->SetVarFloat('pv1_voltage', $this->u16($inv, 0) / 10.0);
-                $this->SetVarFloat('pv1_current', $this->u16($inv, 1) / 10.0);
-                $this->SetVarFloat('pv1_power',   (float)$this->u32($inv, 2));
-            }
-            if ($this->ReadPropertyBoolean('EnableMPPT2')) {
-                $this->SetVarFloat('pv2_voltage', $this->u16($inv, 4) / 10.0);
-                $this->SetVarFloat('pv2_current', $this->u16($inv, 5) / 10.0);
-                $this->SetVarFloat('pv2_power',   (float)$this->u32($inv, 6));
-            }
-            if ($this->ReadPropertyBoolean('EnableMPPT3')) {
-                $this->SetVarFloat('pv3_voltage', $this->u16($inv, 8) / 10.0);
-                $this->SetVarFloat('pv3_current', $this->u16($inv, 9) / 10.0);
-                $this->SetVarFloat('pv3_power',   (float)$this->u32($inv, 10));
-            }
-            if ($this->ReadPropertyBoolean('EnableMPPT4')) {
-                $this->SetVarFloat('pv4_voltage', $this->u16($inv, 12) / 10.0);
-                $this->SetVarFloat('pv4_current', $this->u16($inv, 13) / 10.0);
-                $this->SetVarFloat('pv4_power',   (float)$this->u32($inv, 14));
-            }
+        // SOC/SOH aus BMS (pro String), Mittelwert als Basis-SOC
+        $soc1 = ($bms1 !== null) ? (float)$this->u16($bms1, 2) : 0.0;        // 47908
+        $soc2 = ($bms2 !== null) ? (float)$this->u16($bms2, 2) : 0.0;        // 47926
+        $bat2Active = $this->ReadPropertyBoolean('GroupBat2') && ($bat2blk !== null);
+        $socAvg = $bat2Active ? (($soc1 + $soc2) / 2.0) : $soc1;
+        $this->SetVarFloat('soc', $socAvg);
+
+        // PV-Details per MPPT (unverändert aus inv/pvext-Block)
+        if ($this->ReadPropertyBoolean('EnableMPPT1')) {
+            $this->SetVarFloat('pv1_voltage', $this->u16($inv, 0) / 10.0);
+            $this->SetVarFloat('pv1_current', $this->u16($inv, 1) / 10.0);
+            $this->SetVarFloat('pv1_power',   (float)$this->u32($inv, 2));
+        }
+        if ($this->ReadPropertyBoolean('EnableMPPT2')) {
+            $this->SetVarFloat('pv2_voltage', $this->u16($inv, 4) / 10.0);
+            $this->SetVarFloat('pv2_current', $this->u16($inv, 5) / 10.0);
+            $this->SetVarFloat('pv2_power',   (float)$this->u32($inv, 6));
+        }
+        if ($this->ReadPropertyBoolean('EnableMPPT3')) {
+            $this->SetVarFloat('pv3_voltage', $this->u16($inv, 8) / 10.0);
+            $this->SetVarFloat('pv3_current', $this->u16($inv, 9) / 10.0);
+            $this->SetVarFloat('pv3_power',   (float)$this->u32($inv, 10));
+        }
+        if ($this->ReadPropertyBoolean('EnableMPPT4')) {
+            $this->SetVarFloat('pv4_voltage', $this->u16($inv, 12) / 10.0);
+            $this->SetVarFloat('pv4_current', $this->u16($inv, 13) / 10.0);
+            $this->SetVarFloat('pv4_power',   (float)$this->u32($inv, 14));
         }
         if ($pvext !== null) {
             if ($this->ReadPropertyBoolean('EnableMPPT5')) {
@@ -361,8 +462,9 @@ class GoodweET extends IPSModule
             }
         }
 
-        // Netz R/S/T
-        if ($this->ReadPropertyBoolean('GroupGrid') && $inv !== null) {
+        // Netz R/S/T (Inverter-AC) + Netzmodus + Inselerkennung
+        $gridMode = $this->u16($inv, 33);   // 35136
+        if ($this->ReadPropertyBoolean('GroupGrid')) {
             $this->SetVarFloat('grid_l1_volt', $this->u16($inv, 18) / 10.0);
             $this->SetVarFloat('grid_l1_curr', $this->u16($inv, 19) / 10.0);
             $this->SetVarFloat('grid_l1_freq', $this->u16($inv, 20) / 100.0);
@@ -375,47 +477,67 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('grid_l3_curr', $this->u16($inv, 29) / 10.0);
             $this->SetVarFloat('grid_l3_freq', $this->u16($inv, 30) / 100.0);
             $this->SetVarFloat('grid_l3_pwr',  (float)$this->s32($inv, 31));
-            $this->SetVarInt('grid_mode',     $this->u16($inv, 33));
             $this->SetVarFloat('inv_total',   (float)$this->s32($inv, 34));
-            $this->SetVarFloat('ac_power',    (float)$this->s32($inv, 36));
+        }
+        $this->SetVarInt('grid_mode',   $gridMode);
+        $this->SetVarFloat('ac_power',  (float)$this->s32($inv, 36));
+        // Inselbetrieb: grid_mode 17 (Bypass) / 18 (Inselbetrieb)
+        $this->SetVarBool('island', ($gridMode === 17 || $gridMode === 18));
+
+        // Netz-Gesamtleistung aus SmartMeter (36025)
+        if ($meter !== null) {
+            $this->SetVarFloat('meter_total', (float)$this->s32($meter, 6));
         }
 
-        // Batterie 1
-        if ($this->ReadPropertyBoolean('GroupBat1') && $bat1blk !== null) {
+        // Batterie 1 (Leistung/Modus aus DSP, SOC/SOH/Temp aus BMS)
+        if ($this->ReadPropertyBoolean('GroupBat1')) {
             $this->SetVarFloat('bat1_volt', $this->u16($bat1blk, 6)  / 10.0);
             $this->SetVarFloat('bat1_curr', $this->s16($bat1blk, 7)  / 10.0);
             $this->SetVarFloat('bat1_pwr',  (float)$this->s32($bat1blk, 8));
             $this->SetVarInt('bat1_mode',   $this->u16($bat1blk, 10));
-            $this->SetVarFloat('bat1_soc',  (float)$soc);
-        }
-
-        // Temperaturen
-        if ($this->ReadPropertyBoolean('GroupTemp') && $bat1blk !== null) {
-            $this->SetVarFloat('temp_air',      $this->s16($bat1blk, 0) / 10.0);
-            $this->SetVarFloat('temp_module',   $this->s16($bat1blk, 1) / 10.0);
-            $this->SetVarFloat('temp_heatsink', $this->s16($bat1blk, 2) / 10.0);
-            $bmsBlk = $this->modbusRead($host, $port, $unitId, 35368, 1);
-            if ($bmsBlk !== null) {
-                $this->SetVarFloat('temp_bms', $this->s16($bmsBlk, 0) / 10.0);
+            $this->SetVarFloat('bat1_soc',  $soc1);
+            if ($bms1 !== null) {
+                $this->SetVarFloat('bat1_soh',  (float)$this->u16($bms1, 3));
+                $this->SetVarFloat('bat1_temp', $this->s16($bms1, 4) / 10.0);
+            }
+            $cells1 = $this->modbusRead($host, $port, $unitId, 37022, 2);
+            if ($cells1 !== null) {
+                $this->SetVarInt('bat1_cell_vmax', $this->u16($cells1, 0));
+                $this->SetVarInt('bat1_cell_vmin', $this->u16($cells1, 1));
             }
         }
 
+        // Temperaturen (Geräte-Temps aus DSP-Block)
+        if ($this->ReadPropertyBoolean('GroupTemp')) {
+            $this->SetVarFloat('temp_air',      $this->s16($bat1blk, 0) / 10.0);
+            $this->SetVarFloat('temp_module',   $this->s16($bat1blk, 1) / 10.0);
+            $this->SetVarFloat('temp_heatsink', $this->s16($bat1blk, 2) / 10.0);
+        }
+
         // Batterie 2
-        if ($this->ReadPropertyBoolean('GroupBat2') && $bat2blk !== null) {
+        if ($bat2Active) {
             $this->SetVarFloat('bat2_volt', $this->u16($bat2blk, 0)  / 10.0);
             $this->SetVarFloat('bat2_curr', $this->s16($bat2blk, 1)  / 10.0);
             $this->SetVarFloat('bat2_pwr',  (float)$this->s32($bat2blk, 2));
             $this->SetVarInt('bat2_mode',   $this->u16($bat2blk, 4));
+            $this->SetVarFloat('bat2_soc',  $soc2);
+            if ($bms2 !== null) {
+                $this->SetVarFloat('bat2_soh',  (float)$this->u16($bms2, 3));
+                $this->SetVarFloat('bat2_temp', $this->s16($bms2, 4) / 10.0);
+            }
+            $cells2 = $this->modbusRead($host, $port, $unitId, 39020, 2);
+            if ($cells2 !== null) {
+                $this->SetVarInt('bat2_cell_vmax', $this->u16($cells2, 0));
+                $this->SetVarInt('bat2_cell_vmin', $this->u16($cells2, 1));
+            }
         }
 
         // Batteriegesamt (berechnet)
-        if ($bat1blk !== null) {
-            $b1p = $this->s32($bat1blk, 8);
-            $b2p = ($bat2blk !== null) ? $this->s32($bat2blk, 2) : 0;
-            $this->SetVarFloat('bat_total_pwr', (float)($b1p + $b2p));
-        }
+        $b1p = $this->s32($bat1blk, 8);
+        $b2p = ($bat2blk !== null) ? $this->s32($bat2blk, 2) : 0;
+        $this->SetVarFloat('bat_total_pwr', (float)($b1p + $b2p));
 
-        // Smart Meter
+        // Smart Meter (Phasen) + Frequenz
         if ($this->ReadPropertyBoolean('GroupMeter') && $meter !== null) {
             $this->SetVarFloat('mt_l1_pwr',  (float)$this->s32($meter, 0));
             $this->SetVarFloat('mt_l2_pwr',  (float)$this->s32($meter, 2));
@@ -426,6 +548,22 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('mt_l1_curr', $this->u16($meter, 36) / 10.0);
             $this->SetVarFloat('mt_l2_curr', $this->u16($meter, 37) / 10.0);
             $this->SetVarFloat('mt_l3_curr', $this->u16($meter, 38) / 10.0);
+            $freqBlk = $this->modbusRead($host, $port, $unitId, 36014, 1);
+            if ($freqBlk !== null) {
+                $this->SetVarFloat('grid_freq', $this->u16($freqBlk, 0) / 100.0);
+            }
+        }
+
+        // Backup / Inselleistung
+        if ($this->ReadPropertyBoolean('GroupBackup')) {
+            $bk = $this->modbusRead($host, $port, $unitId, 35169, 2);
+            if ($bk !== null) {
+                $this->SetVarFloat('backup_total', (float)$this->s32($bk, 0));
+            }
+            $bkSt = $this->modbusRead($host, $port, $unitId, 45252, 1);
+            if ($bkSt !== null) {
+                $this->SetVarBool('backup_active', $this->u16($bkSt, 0) > 0);
+            }
         }
     }
 
@@ -442,25 +580,17 @@ class GoodweET extends IPSModule
         if ($e === null) {
             return;
         }
-        $this->SetVarFloat('e_pv_total',     $this->u32($e, 0)  / 10.0);
-        $this->SetVarFloat('e_pv_day',       $this->u32($e, 2)  / 10.0);
-        $this->SetVarFloat('work_hours',     (float)$this->u32($e, 6));
-        $this->SetVarFloat('e_sell_day',     $this->u16($e, 8)  / 10.0);
-        $this->SetVarFloat('e_buy_day',      $this->u16($e, 11) / 10.0);
-        $this->SetVarFloat('e_load_total',   $this->u32($e, 12) / 10.0);
-        $this->SetVarFloat('e_load_day',     $this->u16($e, 14) / 10.0);
-        $this->SetVarFloat('e_charge_total', $this->u32($e, 15) / 10.0);
-        $this->SetVarFloat('e_charge_day',   $this->u16($e, 17) / 10.0);
-        $this->SetVarFloat('e_disch_total',  $this->u32($e, 18) / 10.0);
-        $this->SetVarFloat('e_disch_day',    $this->u16($e, 20) / 10.0);
-
-        if ($this->ReadPropertyBoolean('GroupMeter')) {
-            $me = $this->modbusRead($host, $port, $unitId, 36015, 4);
-            if ($me !== null) {
-                $this->SetVarFloat('mt_e_sell', $this->readFloat($me, 0));
-                $this->SetVarFloat('mt_e_buy',  $this->readFloat($me, 2));
-            }
-        }
+        $this->SetVarFloat('e_pv_total',     $this->u32($e, 0)  / 10.0);   // 35191
+        $this->SetVarFloat('e_pv_day',       $this->u32($e, 2)  / 10.0);   // 35193
+        $this->SetVarFloat('work_hours',     (float)$this->u32($e, 6));    // 35197
+        $this->SetVarFloat('e_sell_day',     $this->u16($e, 8)  / 10.0);   // 35199
+        $this->SetVarFloat('e_buy_day',      $this->u16($e, 11) / 10.0);   // 35202
+        $this->SetVarFloat('e_load_total',   $this->u32($e, 12) / 10.0);   // 35203
+        $this->SetVarFloat('e_load_day',     $this->u16($e, 14) / 10.0);   // 35205
+        $this->SetVarFloat('e_charge_total', $this->u32($e, 15) / 10.0);   // 35206
+        $this->SetVarFloat('e_charge_day',   $this->u16($e, 17) / 10.0);   // 35208
+        $this->SetVarFloat('e_disch_total',  $this->u32($e, 18) / 10.0);   // 35209
+        $this->SetVarFloat('e_disch_day',    $this->u16($e, 20) / 10.0);   // 35211
     }
 
     private function ReadErrorData()
@@ -529,29 +659,39 @@ class GoodweET extends IPSModule
                 }
                 break;
 
-            case 'ctl_feed_enable':
-                $val = (bool)$Value ? 1 : 0;
-                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_FEED_POWER_ENABLE, $val)) {
-                    $this->SetVarBool('ctl_feed_enable', (bool)$Value);
+            case 'ctl_ems_enable':
+                $val = (bool)$Value ? 2 : 0;
+                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_ENABLE, $val)) {
+                    $this->SetVarBool('ctl_ems_enable', (bool)$Value);
                 }
                 break;
 
-            case 'ctl_feed_limit':
+            case 'ctl_ems_mode':
                 $val = (int)$Value;
-                $hi  = ($val >> 16) & 0xFFFF;
-                $lo  = $val & 0xFFFF;
-                if ($this->modbusWriteMultiple($host, $port, $unitId, GoodweRegisterMap::REG_FEED_POWER_LIMIT, [$hi, $lo])) {
-                    $this->SetVarInt('ctl_feed_limit', $val);
+                if ($val < 0 || $val > 12) { return; }
+                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_MODE, $val)) {
+                    $this->SetVarInt('ctl_ems_mode', $val);
                 }
                 break;
 
             case 'ctl_ems_power':
-                $val = (int)$Value;
-                $this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_MODE, 1);
-                $hi  = ($val >> 16) & 0xFFFF;
-                $lo  = $val & 0xFFFF;
-                if ($this->modbusWriteMultiple($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_SET, [$hi, $lo])) {
+                $val = max(0, min(GoodweRegisterMap::EMS_POWER_MAX, (int)$Value));
+                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_SET, $val)) {
                     $this->SetVarInt('ctl_ems_power', $val);
+                }
+                break;
+
+            case 'ctl_export_enable':
+                $val = (bool)$Value ? 1 : 0;
+                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_FEED_POWER_ENABLE, $val)) {
+                    $this->SetVarBool('ctl_export_enable', (bool)$Value);
+                }
+                break;
+
+            case 'ctl_export_limit':
+                $val = max(0, min(GoodweRegisterMap::EMS_POWER_MAX, (int)$Value));
+                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_FEED_POWER_LIMIT, $val)) {
+                    $this->SetVarInt('ctl_export_limit', $val);
                 }
                 break;
 
@@ -559,22 +699,6 @@ class GoodweET extends IPSModule
                 $val = max(0, min(100, (int)$Value));
                 if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_SOC_MIN, $val)) {
                     $this->SetVarInt('ctl_soc_min', $val);
-                }
-                break;
-
-            case 'ctl_soc_max':
-                $val = max(80, min(100, (int)$Value));
-                if ($this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_SOC_MAX_CHARGE, $val)) {
-                    $this->SetVarInt('ctl_soc_max', $val);
-                }
-                break;
-
-            case 'ctl_peak_pwr':
-                $val = (int)$Value;
-                $hi  = ($val >> 16) & 0xFFFF;
-                $lo  = $val & 0xFFFF;
-                if ($this->modbusWriteMultiple($host, $port, $unitId, GoodweRegisterMap::REG_PEAK_SHAVING_PWR, [$hi, $lo])) {
-                    $this->SetVarInt('ctl_peak_pwr', $val);
                 }
                 break;
 
@@ -602,7 +726,7 @@ class GoodweET extends IPSModule
 
     private function RegisterVariables()
     {
-        // Alte Variablen-Idents (R/S/T) aus früheren Versionen entfernen
+        // Obsolete Idents aus früheren Versionen entfernen
         $obsolete = [
             'grid_r_volt','grid_r_curr','grid_r_freq','grid_r_pwr',
             'grid_s_volt','grid_s_curr','grid_s_freq','grid_s_pwr',
@@ -610,6 +734,8 @@ class GoodweET extends IPSModule
             'mt_r_volt','mt_r_curr','mt_r_pwr',
             'mt_s_volt','mt_s_curr','mt_s_pwr',
             'mt_t_volt','mt_t_curr','mt_t_pwr',
+            'mt_e_sell','mt_e_buy','e_buy_total','e_sell_total',
+            'ctl_feed_enable','ctl_feed_limit','ctl_soc_max','ctl_peak_pwr',
         ];
         foreach ($obsolete as $ident) {
             $this->UnregVarIfExists($ident);
@@ -620,7 +746,6 @@ class GoodweET extends IPSModule
             $this->RegisterVar($v, $pos++, false);
         }
 
-        // PV-Variablen per MPPT-Auswahl
         foreach (GoodweRegisterMap::VARS_PV as $v) {
             $mppt = $v[8] ?? 0;
             if ($mppt > 0 && $this->ReadPropertyBoolean('EnableMPPT' . $mppt)) {
@@ -632,11 +757,12 @@ class GoodweET extends IPSModule
 
         $groups = [
             'GroupGrid'    => GoodweRegisterMap::VARS_GRID,
-            'GroupBat1'   => GoodweRegisterMap::VARS_BAT1,
+            'GroupBat1'    => GoodweRegisterMap::VARS_BAT1,
             'GroupBat2'    => GoodweRegisterMap::VARS_BAT2,
             'GroupEnergy'  => GoodweRegisterMap::VARS_ENERGY,
             'GroupMeter'   => GoodweRegisterMap::VARS_METER,
             'GroupTemp'    => GoodweRegisterMap::VARS_TEMP,
+            'GroupBackup'  => GoodweRegisterMap::VARS_BACKUP,
             'GroupErrors'  => GoodweRegisterMap::VARS_ERRORS,
             'GroupDevice'  => GoodweRegisterMap::VARS_DEVICE,
             'GroupControl' => GoodweRegisterMap::VARS_CONTROL,
@@ -741,32 +867,41 @@ class GoodweET extends IPSModule
 
     private function CreateProfiles()
     {
-        $this->CreateProfile('GoodweET.Watt',    VARIABLETYPE_FLOAT,   ' W',  -30000.0, 30000.0, 1.0,  0);
-        $this->CreateProfile('GoodweET.Volt',    VARIABLETYPE_FLOAT,   ' V',       0.0,  1000.0, 0.1,  1);
-        $this->CreateProfile('GoodweET.Ampere',  VARIABLETYPE_FLOAT,   ' A',    -200.0,   200.0, 0.1,  1);
-        $this->CreateProfile('GoodweET.Hertz',   VARIABLETYPE_FLOAT,   ' Hz',     45.0,    65.0, 0.01, 2);
-        $this->CreateProfile('GoodweET.Percent', VARIABLETYPE_INTEGER, ' %',          0,     100, 1,    0);
+        $this->CreateProfile('GoodweET.Watt',     VARIABLETYPE_FLOAT,   ' W',  -40000.0, 40000.0, 1.0,  0);
+        $this->CreateProfile('GoodweET.Volt',     VARIABLETYPE_FLOAT,   ' V',       0.0,  1000.0, 0.1,  1);
+        $this->CreateProfile('GoodweET.Ampere',   VARIABLETYPE_FLOAT,   ' A',    -200.0,   200.0, 0.1,  1);
+        $this->CreateProfile('GoodweET.Hertz',    VARIABLETYPE_FLOAT,   ' Hz',     45.0,    65.0, 0.01, 2);
+        $this->CreateProfile('GoodweET.Percent',  VARIABLETYPE_INTEGER, ' %',          0,     100, 1,    0);
+        $this->CreateProfile('GoodweET.MilliVolt',VARIABLETYPE_INTEGER, ' mV',         0,    5000, 1,    0);
+        $this->CreateProfile('GoodweET.WattEMS',  VARIABLETYPE_INTEGER, ' W',          0,   34500, 1,    0);
 
         if (!IPS_VariableProfileExists('GoodweET.WorkMode')) {
             IPS_CreateVariableProfile('GoodweET.WorkMode', VARIABLETYPE_INTEGER);
-            $colors = [0xF5A623, 0x7A8A99, 0x2BB3C0, 0x27D07F, 0xE74C3C, 0xF39C12];
-            foreach (GoodweRegisterMap::WORK_MODES as $k => $label) {
-                IPS_SetVariableProfileAssociation('GoodweET.WorkMode', $k, $label, '', $colors[$k] ?? 0x7A8A99);
-            }
+        }
+        $wmColors = [0xF5A623, 0x7A8A99, 0x2BB3C0, 0x27D07F, 0xE74C3C, 0xF39C12];
+        foreach (GoodweRegisterMap::WORK_MODES as $k => $label) {
+            IPS_SetVariableProfileAssociation('GoodweET.WorkMode', $k, $label, '', $wmColors[$k] ?? 0x7A8A99);
+        }
+
+        if (!IPS_VariableProfileExists('GoodweET.EMSMode')) {
+            IPS_CreateVariableProfile('GoodweET.EMSMode', VARIABLETYPE_INTEGER);
+        }
+        foreach (GoodweRegisterMap::EMS_MODES as $k => $label) {
+            IPS_SetVariableProfileAssociation('GoodweET.EMSMode', $k, $label, '', 0x7A8A99);
         }
 
         if (!IPS_VariableProfileExists('GoodweET.BatMode')) {
             IPS_CreateVariableProfile('GoodweET.BatMode', VARIABLETYPE_INTEGER);
-            IPS_SetVariableProfileAssociation('GoodweET.BatMode', 0, 'Standby',  '', 0x7A8A99);
-            IPS_SetVariableProfileAssociation('GoodweET.BatMode', 1, 'Laden',    '', 0x27D07F);
-            IPS_SetVariableProfileAssociation('GoodweET.BatMode', 2, 'Entladen', '', 0xF5A623);
+        }
+        foreach (GoodweRegisterMap::BAT_MODES as $k => $label) {
+            IPS_SetVariableProfileAssociation('GoodweET.BatMode', $k, $label, '', 0x7A8A99);
         }
 
         if (!IPS_VariableProfileExists('GoodweET.GridMode')) {
             IPS_CreateVariableProfile('GoodweET.GridMode', VARIABLETYPE_INTEGER);
-            foreach (GoodweRegisterMap::GRID_MODES as $k => $label) {
-                IPS_SetVariableProfileAssociation('GoodweET.GridMode', $k, $label, '', 0x7A8A99);
-            }
+        }
+        foreach (GoodweRegisterMap::GRID_MODES as $k => $label) {
+            IPS_SetVariableProfileAssociation('GoodweET.GridMode', $k, $label, '', 0x7A8A99);
         }
     }
 
