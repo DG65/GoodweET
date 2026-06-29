@@ -101,6 +101,8 @@ class GoodweRegisterMap
         ['ac_power',      'AC Wirkleistung',     'F', 'GoodweET.Watt',     1, true,  'basis', 'DSP 35139'],
         ['bat_total_pwr', 'Bat. Gesamtleistg.',  'F', 'GoodweET.Watt',     1, true,  'basis', 'Σ Bat1+Bat2'],
         ['meter_total',   'Netz Leistung',       'F', 'GoodweET.Watt',     1, true,  'basis', 'SM 36025'],
+        ['bat_charge_max_w',   'Bat. max. Ladeleistung',  'F', 'GoodweET.Watt', 1, false, 'basis', 'BMS calc'],
+        ['bat_discharge_max_w','Bat. max. Entladeleistung','F','GoodweET.Watt', 1, false, 'basis', 'BMS calc'],
         ['connected',     'Verbindung',          'B', '~Alert.Reversed',   1, false, 'basis', ''],
     ];
 
@@ -153,6 +155,10 @@ class GoodweRegisterMap
         ['bat1_temp',     'Bat.1 Temperatur', 'F', '~Temperature',      10, true,  'bat1', 'BMS 47910'],
         ['bat1_cell_vmax','Bat.1 Zellspg max','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37022'],
         ['bat1_cell_vmin','Bat.1 Zellspg min','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37023'],
+        ['bat1_chg_max_a','Bat.1 max. Ladestrom',   'F', 'GoodweET.Ampere', 10, false, 'bat1', 'BMS 47903'],
+        ['bat1_dis_max_a','Bat.1 max. Entladestrom', 'F', 'GoodweET.Ampere', 10, false, 'bat1', 'BMS 47905'],
+        ['bat1_bms_warn', 'Bat.1 BMS Warnung',       'I', '',                 1, true,  'bat1', 'BMS 47911'],
+        ['bat1_bms_alarm','Bat.1 BMS Alarm',         'I', '',                 1, true,  'bat1', 'BMS 47913'],
     ];
 
     const VARS_BAT2 = [
@@ -349,6 +355,15 @@ class GoodweET extends IPSModule
         // Leistung nur bei Netz-Laden schreiben (47512, U16, gedeckelt)
         if ($intent === GoodweRegisterMap::INTENT_GRID_CHARGE) {
             $w = max(0, min(GoodweRegisterMap::EMS_POWER_MAX, $watt));
+            // zusätzlich auf die vom BMS erlaubte Ladeleistung klemmen
+            $maxVid = @$this->GetIDForIdent('bat_charge_max_w');
+            if ($maxVid) {
+                $allowed = (int)GetValue($maxVid);
+                if ($allowed > 0 && $allowed < $w) {
+                    $w = $allowed;
+                    $this->SendDebug('ApplySetpoint', "Auf BMS-Grenze geklemmt: $allowed W", 0);
+                }
+            }
             $this->modbusWriteSingle($host, $port, $unitId, GoodweRegisterMap::REG_EMS_POWER_SET, $w);
             $this->SetVarInt('ctl_ems_power', $w);
         }
@@ -400,7 +415,7 @@ class GoodweET extends IPSModule
         $bat2blk = $this->modbusRead($host, $port, $unitId, 35262, 7);
         $pvext   = $this->modbusRead($host, $port, $unitId, 35301, 41);
         $meter   = $this->modbusRead($host, $port, $unitId, 36019, 39);
-        $bms1    = $this->modbusRead($host, $port, $unitId, 47906, 5);
+        $bms1    = $this->modbusRead($host, $port, $unitId, 47902, 14);  // inkl. Lade-/Entladegrenzen
         $bms2    = $this->modbusRead($host, $port, $unitId, 47924, 5);
 
         $ok = ($inv !== null && $bat1blk !== null);
@@ -422,7 +437,8 @@ class GoodweET extends IPSModule
         }
 
         // SOC/SOH aus BMS (pro String), Mittelwert als Basis-SOC
-        $soc1 = ($bms1 !== null) ? (float)$this->u16($bms1, 2) : 0.0;        // 47908
+        // bms1-Block ab 47902: SOC=47908=Offset6, bms2-Block ab 47924: SOC=47926=Offset2
+        $soc1 = ($bms1 !== null) ? (float)$this->u16($bms1, 6) : 0.0;        // 47908
         $soc2 = ($bms2 !== null) ? (float)$this->u16($bms2, 2) : 0.0;        // 47926
         $bat2Active = $this->ReadPropertyBoolean('GroupBat2') && ($bat2blk !== null);
         $socAvg = $bat2Active ? (($soc1 + $soc2) / 2.0) : $soc1;
@@ -497,8 +513,12 @@ class GoodweET extends IPSModule
             $this->SetVarInt('bat1_mode',   $this->u16($bat1blk, 10));
             $this->SetVarFloat('bat1_soc',  $soc1);
             if ($bms1 !== null) {
-                $this->SetVarFloat('bat1_soh',  (float)$this->u16($bms1, 3));
-                $this->SetVarFloat('bat1_temp', $this->s16($bms1, 4) / 10.0);
+                $this->SetVarFloat('bat1_soh',  (float)$this->u16($bms1, 7));   // 47909
+                $this->SetVarFloat('bat1_temp', $this->s16($bms1, 8) / 10.0);   // 47910
+                $this->SetVarFloat('bat1_chg_max_a', $this->u16($bms1, 1) / 10.0); // 47903
+                $this->SetVarFloat('bat1_dis_max_a', $this->u16($bms1, 3) / 10.0); // 47905
+                $this->SetVarInt('bat1_bms_warn',  $this->u32($bms1, 9));       // 47911
+                $this->SetVarInt('bat1_bms_alarm', $this->u32($bms1, 11));      // 47913
             }
             $cells1 = $this->modbusRead($host, $port, $unitId, 37022, 2);
             if ($cells1 !== null) {
@@ -536,6 +556,30 @@ class GoodweET extends IPSModule
         $b1p = $this->s32($bat1blk, 8);
         $b2p = ($bat2blk !== null) ? $this->s32($bat2blk, 2) : 0;
         $this->SetVarFloat('bat_total_pwr', (float)($b1p + $b2p));
+
+        // BMS-Lade-/Entladegrenzen → erlaubte Systemleistung (Deckel für ApplySetpoint)
+        // P = max. Strom (A) × Batteriespannung (V). Quelle: OpenEMS WBMS 47902-47905.
+        if ($bms1 !== null) {
+            $v1    = $this->u16($bms1, 4) / 10.0;        // 47906 Spannung
+            $chgA1 = $this->u16($bms1, 1) / 10.0;        // 47903
+            $disA1 = $this->u16($bms1, 3) / 10.0;        // 47905
+            $chgMaxW = $chgA1 * $v1;
+            $disMaxW = $disA1 * $v1;
+            if ($bat2Active) {
+                // Bat2-Grenzen per +18-Offset (47920/47922) — an Anlage verifizieren
+                $lim2 = $this->modbusRead($host, $port, $unitId, 47920, 4);
+                $v2   = ($bms2 !== null) ? $this->u16($bms2, 0) / 10.0 : $v1;
+                if ($lim2 !== null) {
+                    $chgMaxW += ($this->u16($lim2, 1) / 10.0) * $v2;
+                    $disMaxW += ($this->u16($lim2, 3) / 10.0) * $v2;
+                } else {
+                    $chgMaxW *= 2.0;   // symmetrische Strings angenommen
+                    $disMaxW *= 2.0;
+                }
+            }
+            $this->SetVarFloat('bat_charge_max_w',    $chgMaxW);
+            $this->SetVarFloat('bat_discharge_max_w', $disMaxW);
+        }
 
         // Smart Meter (Phasen) + Frequenz
         if ($this->ReadPropertyBoolean('GroupMeter') && $meter !== null) {
