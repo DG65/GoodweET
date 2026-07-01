@@ -130,9 +130,12 @@ class GoodweRegisterMap
     // Berechnete MPPT-Tracker-Leistung: V_Tracker × (I_StringA + I_StringB).
     // MPPT1=PV1+PV2, MPPT2=PV3+PV4, MPPT3=PV5+PV6.
     const VARS_MPPT = [
-        ['mppt1_power', 'MPPT1 Leistung', 'F', 'GoodweET.Watt', 1, true, 'pv', 'calc'],
-        ['mppt2_power', 'MPPT2 Leistung', 'F', 'GoodweET.Watt', 1, true, 'pv', 'calc'],
-        ['mppt3_power', 'MPPT3 Leistung', 'F', 'GoodweET.Watt', 1, true, 'pv', 'calc'],
+        ['mppt1_power',   'MPPT1 Leistung', 'F', 'GoodweET.Watt',   1, true,  'pv', 'DSP 35337'],
+        ['mppt1_current', 'MPPT1 Strom',    'F', 'GoodweET.Ampere', 1, false, 'pv', 'DSP 35345'],
+        ['mppt2_power',   'MPPT2 Leistung', 'F', 'GoodweET.Watt',   1, true,  'pv', 'DSP 35338'],
+        ['mppt2_current', 'MPPT2 Strom',    'F', 'GoodweET.Ampere', 1, false, 'pv', 'DSP 35346'],
+        ['mppt3_power',   'MPPT3 Leistung', 'F', 'GoodweET.Watt',   1, true,  'pv', 'DSP 35339'],
+        ['mppt3_current', 'MPPT3 Strom',    'F', 'GoodweET.Ampere', 1, false, 'pv', 'DSP 35347'],
     ];
 
     const VARS_GRID = [
@@ -476,23 +479,28 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('pv6_current', $this->u16($pvext, 7) / 10.0);
         }
 
-        // MPPT-Tracker-Leistung: direkte Register P MPPT1/2/3 = 35337/38/39.
+        // MPPT-Tracker-Leistung + -Strom: direkte Register P MPPT1/2/3 =
+        // 35337/38/39, I MPPT1/2/3 = 35345/46/47.
         // GoodWe-Firmware-Quirk (live per MCP-Diagnose verifiziert, 2026-07-01):
         // Requests, die BEI/NACH 35333 beginnen, liefern für 35338/35339 nur
         // 0xFFFF — auch wenn der Bereich Teil eines größeren, früher
         // startenden Blocks ist (der 41er-pvext-Block ab 35301 ist NICHT
         // sicher). Requests ab 35332 oder früher liefern zuverlässig korrekte
-        // Werte (5/5 Wiederholungen bestätigt). Deshalb eigener kleiner Block.
-        $mpptBlk = $this->modbusRead($host, $port, $unitId, 35332, 8);
+        // Werte (mehrfach bestätigt). I MPPT1-3 (35345-47) sind unabhängig
+        // vom Startpunkt stabil, liegen aber im selben Block ab 35332+16.
+        $mpptBlk = $this->modbusRead($host, $port, $unitId, 35332, 16);
         if ($mpptBlk !== null) {
             if ($this->ReadPropertyBoolean('EnableTracker1')) {
-                $this->SetVarFloat('mppt1_power', (float)$this->u16($mpptBlk, 5));   // 35337
+                $this->SetVarFloat('mppt1_power',   (float)$this->u16($mpptBlk, 5));    // 35337
+                $this->SetVarFloat('mppt1_current', (float)$this->u16($mpptBlk, 13));   // 35345
             }
             if ($this->ReadPropertyBoolean('EnableTracker2')) {
-                $this->SetVarFloat('mppt2_power', (float)$this->u16($mpptBlk, 6));   // 35338
+                $this->SetVarFloat('mppt2_power',   (float)$this->u16($mpptBlk, 6));    // 35338
+                $this->SetVarFloat('mppt2_current', (float)$this->u16($mpptBlk, 14));   // 35346
             }
             if ($this->ReadPropertyBoolean('EnableTracker3')) {
-                $this->SetVarFloat('mppt3_power', (float)$this->u16($mpptBlk, 7));   // 35339
+                $this->SetVarFloat('mppt3_power',   (float)$this->u16($mpptBlk, 7));    // 35339
+                $this->SetVarFloat('mppt3_current', (float)$this->u16($mpptBlk, 15));   // 35347
             }
         }
 
@@ -812,7 +820,7 @@ class GoodweET extends IPSModule
         }
 
         foreach (GoodweRegisterMap::VARS_MPPT as $i => $v) {
-            $tracker = $i + 1;
+            $tracker = intdiv($i, 2) + 1;   // 2 Einträge (Power+Strom) je Tracker
             if ($this->ReadPropertyBoolean('EnableTracker' . $tracker)) {
                 $this->RegisterVar($v, $pos++, false);
             } else {
