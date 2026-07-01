@@ -61,37 +61,53 @@
         },
         {
           "type": "Label",
-          "caption": "Aktive MPPT-Eingänge (Spannung, Strom, Leistung je Eingang):"
+          "caption": "PV-Eingänge — 3 physische MPPT-Tracker, je 2 parallele Strings (A/B):"
+        },
+        {
+          "type": "Label",
+          "caption": "MPPT-Tracker 1 (PV1 = String A, PV2 = String B) — gemeinsame Leistung:"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT1",
-          "caption": "MPPT 1 (PV1)"
+          "caption": "String A aktiv (PV1: Spannung/Strom)"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT2",
-          "caption": "MPPT 2 (PV2)"
+          "caption": "String B aktiv (PV2: Spannung/Strom)"
+        },
+        {
+          "type": "Label",
+          "caption": "MPPT-Tracker 2 (PV3 = String A, PV4 = String B) — gemeinsame Leistung:"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT3",
-          "caption": "MPPT 3 (PV3)"
+          "caption": "String A aktiv (PV3: Spannung/Strom)"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT4",
-          "caption": "MPPT 4 (PV4)"
+          "caption": "String B aktiv (PV4: Spannung/Strom)"
+        },
+        {
+          "type": "Label",
+          "caption": "MPPT-Tracker 3 (PV5 = String A, PV6 = String B) — gemeinsame Leistung:"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT5",
-          "caption": "MPPT 5 (PV5)"
+          "caption": "String A aktiv (PV5: Spannung/Strom)"
         },
         {
           "type": "CheckBox",
           "name": "EnableMPPT6",
-          "caption": "MPPT 6 (PV6)"
+          "caption": "String B aktiv (PV6: Spannung/Strom)"
+        },
+        {
+          "type": "Label",
+          "caption": "Hinweis: Leistung gibt es nur pro Tracker (35337/38/39), nicht pro String."
         },
         {
           "type": "CheckBox",
