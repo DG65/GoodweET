@@ -163,8 +163,17 @@ class GoodweRegisterMap
         ['bat1_soc',      'Bat.1 SOC',        'F', '~Battery.100',       1, true,  'bat1', 'BMS 47908'],
         ['bat1_soh',      'Bat.1 SOH',        'F', '~Intensity.100',     1, true,  'bat1', 'BMS 47909'],
         ['bat1_temp',     'Bat.1 Temperatur', 'F', '~Temperature',      10, true,  'bat1', 'BMS 47910'],
+        ['bat1_bms_volt', 'Bat.1 Spannung (BMS)', 'F', 'GoodweET.Volt',  10, false, 'bat1', 'BMS 47906'],
+        ['bat1_bms_curr', 'Bat.1 Strom (BMS)',    'F', 'GoodweET.Ampere',10, true,  'bat1', 'BMS 47907'],
+        ['bat1_pack_temp','Bat.1 Paket Temperatur','F', '~Temperature', 10, true,  'bat1', 'BMS 37003'],
+        ['bat1_cell_tmax','Bat.1 Zelle Temp max',  'F', '~Temperature', 10, false, 'bat1', 'BMS 37020'],
+        ['bat1_cell_tmin','Bat.1 Zelle Temp min',  'F', '~Temperature', 10, false, 'bat1', 'BMS 37021'],
         ['bat1_cell_vmax','Bat.1 Zellspg max','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37022'],
         ['bat1_cell_vmin','Bat.1 Zellspg min','I', 'GoodweET.MilliVolt', 1, false, 'bat1', 'BMS 37023'],
+        ['bat1_idx_tmax', 'Bat.1 Zelle Nr. Temp max','I', '', 1, false, 'bat1', 'BMS 37016'],
+        ['bat1_idx_tmin', 'Bat.1 Zelle Nr. Temp min','I', '', 1, false, 'bat1', 'BMS 37017'],
+        ['bat1_idx_vmax', 'Bat.1 Zelle Nr. Spg max', 'I', '', 1, false, 'bat1', 'BMS 37018'],
+        ['bat1_idx_vmin', 'Bat.1 Zelle Nr. Spg min', 'I', '', 1, false, 'bat1', 'BMS 37019'],
         ['bat1_chg_max_a','Bat.1 max. Ladestrom',   'F', 'GoodweET.Ampere', 10, false, 'bat1', 'BMS 47903'],
         ['bat1_dis_max_a','Bat.1 max. Entladestrom', 'F', 'GoodweET.Ampere', 10, false, 'bat1', 'BMS 47905'],
         ['bat1_bms_warn', 'Bat.1 BMS Warnung',       'I', '',                 1, true,  'bat1', 'BMS 47911'],
@@ -179,8 +188,17 @@ class GoodweRegisterMap
         ['bat2_soc',      'Bat.2 SOC',        'F', '~Battery.100',       1, true,  'bat2', 'BMS 47926'],
         ['bat2_soh',      'Bat.2 SOH',        'F', '~Intensity.100',     1, true,  'bat2', 'BMS 47927'],
         ['bat2_temp',     'Bat.2 Temperatur', 'F', '~Temperature',      10, true,  'bat2', 'BMS 47928'],
+        ['bat2_bms_volt', 'Bat.2 Spannung (BMS)', 'F', 'GoodweET.Volt',  10, false, 'bat2', 'BMS 47924'],
+        ['bat2_bms_curr', 'Bat.2 Strom (BMS)',    'F', 'GoodweET.Ampere',10, true,  'bat2', 'BMS 47925'],
+        ['bat2_pack_temp','Bat.2 Paket Temperatur','F', '~Temperature', 10, true,  'bat2', 'BMS 39001'],
+        ['bat2_cell_tmax','Bat.2 Zelle Temp max',  'F', '~Temperature', 10, false, 'bat2', 'BMS 39018'],
+        ['bat2_cell_tmin','Bat.2 Zelle Temp min',  'F', '~Temperature', 10, false, 'bat2', 'BMS 39019'],
         ['bat2_cell_vmax','Bat.2 Zellspg max','I', 'GoodweET.MilliVolt', 1, false, 'bat2', 'BMS 39020'],
         ['bat2_cell_vmin','Bat.2 Zellspg min','I', 'GoodweET.MilliVolt', 1, false, 'bat2', 'BMS 39021'],
+        ['bat2_idx_tmax', 'Bat.2 Zelle Nr. Temp max','I', '', 1, false, 'bat2', 'BMS 39014'],
+        ['bat2_idx_tmin', 'Bat.2 Zelle Nr. Temp min','I', '', 1, false, 'bat2', 'BMS 39015'],
+        ['bat2_idx_vmax', 'Bat.2 Zelle Nr. Spg max', 'I', '', 1, false, 'bat2', 'BMS 39016'],
+        ['bat2_idx_vmin', 'Bat.2 Zelle Nr. Spg min', 'I', '', 1, false, 'bat2', 'BMS 39017'],
     ];
 
     const VARS_ENERGY = [
@@ -218,6 +236,18 @@ class GoodweRegisterMap
     const VARS_BACKUP = [
         ['backup_total', 'Backup Leistung',  'F', 'GoodweET.Watt', 1, true,  'backup', 'DSP 35169'],
         ['backup_active','Backup aktiv',     'B', '~Switch',       1, false, 'backup', 'RW 45252'],
+        ['backup_l1_volt','Backup Spannung L1', 'F', 'GoodweET.Volt',   10, false, 'backup', 'DSP 35145'],
+        ['backup_l1_curr','Backup Strom L1',    'F', 'GoodweET.Ampere', 10, false, 'backup', 'DSP 35146'],
+        ['backup_l1_freq','Backup Frequenz L1', 'F', 'GoodweET.Hertz', 100, false, 'backup', 'DSP 35147'],
+        ['backup_l1_pwr', 'Backup Leistung L1',  'F', 'GoodweET.Watt',   1, true,  'backup', 'DSP 35149'],
+        ['backup_l2_volt','Backup Spannung L2', 'F', 'GoodweET.Volt',   10, false, 'backup', 'DSP 35151'],
+        ['backup_l2_curr','Backup Strom L2',    'F', 'GoodweET.Ampere', 10, false, 'backup', 'DSP 35152'],
+        ['backup_l2_freq','Backup Frequenz L2', 'F', 'GoodweET.Hertz', 100, false, 'backup', 'DSP 35153'],
+        ['backup_l2_pwr', 'Backup Leistung L2',  'F', 'GoodweET.Watt',   1, true,  'backup', 'DSP 35155'],
+        ['backup_l3_volt','Backup Spannung L3', 'F', 'GoodweET.Volt',   10, false, 'backup', 'DSP 35157'],
+        ['backup_l3_curr','Backup Strom L3',    'F', 'GoodweET.Ampere', 10, false, 'backup', 'DSP 35158'],
+        ['backup_l3_freq','Backup Frequenz L3', 'F', 'GoodweET.Hertz', 100, false, 'backup', 'DSP 35159'],
+        ['backup_l3_pwr', 'Backup Leistung L3',  'F', 'GoodweET.Watt',   1, true,  'backup', 'DSP 35161'],
     ];
 
     const VARS_ERRORS = [
@@ -541,15 +571,25 @@ class GoodweET extends IPSModule
             if ($bms !== null) {
                 $this->SetVarFloat('bat1_soh',  (float)$this->u16($bms, 9));       // 47909
                 $this->SetVarFloat('bat1_temp', $this->s16($bms, 10) / 10.0);      // 47910
+                $this->SetVarFloat('bat1_bms_volt', $this->u16($bms, 6) / 10.0);   // 47906
+                $this->SetVarFloat('bat1_bms_curr', $this->s16($bms, 7) / 10.0);   // 47907
                 $this->SetVarFloat('bat1_chg_max_a', $this->u16($bms, 3) / 10.0);  // 47903
                 $this->SetVarFloat('bat1_dis_max_a', $this->u16($bms, 5) / 10.0);  // 47905
                 $this->SetVarInt('bat1_bms_warn',  $this->u32($bms, 11));          // 47911
                 $this->SetVarInt('bat1_bms_alarm', $this->u32($bms, 13));          // 47913
             }
-            $cells1 = $this->modbusRead($host, $port, $unitId, 37022, 2);
+            // Pack-Temp, Zelltemp-Werte, Zellspannungen + zugehörige Zell-Indexe (37000er-Block)
+            $cells1 = $this->modbusRead($host, $port, $unitId, 37003, 21);
             if ($cells1 !== null) {
-                $this->SetVarInt('bat1_cell_vmax', $this->u16($cells1, 0));        // 37022
-                $this->SetVarInt('bat1_cell_vmin', $this->u16($cells1, 1));        // 37023
+                $this->SetVarFloat('bat1_pack_temp', $this->s16($cells1, 0)  / 10.0); // 37003
+                $this->SetVarInt('bat1_idx_tmax',    $this->u16($cells1, 13));        // 37016
+                $this->SetVarInt('bat1_idx_tmin',    $this->u16($cells1, 14));        // 37017
+                $this->SetVarInt('bat1_idx_vmax',    $this->u16($cells1, 15));        // 37018
+                $this->SetVarInt('bat1_idx_vmin',    $this->u16($cells1, 16));        // 37019
+                $this->SetVarFloat('bat1_cell_tmax', $this->s16($cells1, 17) / 10.0); // 37020
+                $this->SetVarFloat('bat1_cell_tmin', $this->s16($cells1, 18) / 10.0); // 37021
+                $this->SetVarInt('bat1_cell_vmax',   $this->u16($cells1, 19));        // 37022
+                $this->SetVarInt('bat1_cell_vmin',   $this->u16($cells1, 20));        // 37023
             }
         }
 
@@ -570,11 +610,20 @@ class GoodweET extends IPSModule
             if ($bms !== null) {
                 $this->SetVarFloat('bat2_soh',  (float)$this->u16($bms, 27));      // 47927
                 $this->SetVarFloat('bat2_temp', $this->s16($bms, 28) / 10.0);      // 47928
+                $this->SetVarFloat('bat2_bms_volt', $this->u16($bms, 24) / 10.0);  // 47924
+                $this->SetVarFloat('bat2_bms_curr', $this->s16($bms, 25) / 10.0);  // 47925
             }
-            $cells2 = $this->modbusRead($host, $port, $unitId, 39020, 2);
+            $cells2 = $this->modbusRead($host, $port, $unitId, 39001, 21);
             if ($cells2 !== null) {
-                $this->SetVarInt('bat2_cell_vmax', $this->u16($cells2, 0));        // 39020
-                $this->SetVarInt('bat2_cell_vmin', $this->u16($cells2, 1));        // 39021
+                $this->SetVarFloat('bat2_pack_temp', $this->s16($cells2, 0)  / 10.0); // 39001
+                $this->SetVarInt('bat2_idx_tmax',    $this->u16($cells2, 13));        // 39014
+                $this->SetVarInt('bat2_idx_tmin',    $this->u16($cells2, 14));        // 39015
+                $this->SetVarInt('bat2_idx_vmax',    $this->u16($cells2, 15));        // 39016
+                $this->SetVarInt('bat2_idx_vmin',    $this->u16($cells2, 16));        // 39017
+                $this->SetVarFloat('bat2_cell_tmax', $this->s16($cells2, 17) / 10.0); // 39018
+                $this->SetVarFloat('bat2_cell_tmin', $this->s16($cells2, 18) / 10.0); // 39019
+                $this->SetVarInt('bat2_cell_vmax',   $this->u16($cells2, 19));        // 39020
+                $this->SetVarInt('bat2_cell_vmin',   $this->u16($cells2, 20));        // 39021
             }
         }
 
@@ -617,11 +666,23 @@ class GoodweET extends IPSModule
             }
         }
 
-        // Backup / Inselleistung
+        // Backup / Inselleistung (pro Phase + Gesamt)
         if ($this->ReadPropertyBoolean('GroupBackup')) {
-            $bk = $this->modbusRead($host, $port, $unitId, 35169, 2);
-            if ($bk !== null) {
-                $this->SetVarFloat('backup_total', (float)$this->s32($bk, 0));
+            $bkPhase = $this->modbusRead($host, $port, $unitId, 35145, 26);
+            if ($bkPhase !== null) {
+                $this->SetVarFloat('backup_l1_volt', $this->u16($bkPhase, 0)  / 10.0);  // 35145
+                $this->SetVarFloat('backup_l1_curr', $this->u16($bkPhase, 1)  / 10.0);  // 35146
+                $this->SetVarFloat('backup_l1_freq', $this->u16($bkPhase, 2)  / 100.0); // 35147
+                $this->SetVarFloat('backup_l1_pwr',  (float)$this->s32($bkPhase, 4));   // 35149
+                $this->SetVarFloat('backup_l2_volt', $this->u16($bkPhase, 6)  / 10.0);  // 35151
+                $this->SetVarFloat('backup_l2_curr', $this->u16($bkPhase, 7)  / 10.0);  // 35152
+                $this->SetVarFloat('backup_l2_freq', $this->u16($bkPhase, 8)  / 100.0); // 35153
+                $this->SetVarFloat('backup_l2_pwr',  (float)$this->s32($bkPhase, 10));  // 35155
+                $this->SetVarFloat('backup_l3_volt', $this->u16($bkPhase, 12) / 10.0);  // 35157
+                $this->SetVarFloat('backup_l3_curr', $this->u16($bkPhase, 13) / 10.0);  // 35158
+                $this->SetVarFloat('backup_l3_freq', $this->u16($bkPhase, 14) / 100.0); // 35159
+                $this->SetVarFloat('backup_l3_pwr',  (float)$this->s32($bkPhase, 16));  // 35161
+                $this->SetVarFloat('backup_total',   (float)$this->s32($bkPhase, 24));  // 35169
             }
             $bkSt = $this->modbusRead($host, $port, $unitId, 45252, 1);
             if ($bkSt !== null) {
