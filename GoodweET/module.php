@@ -495,19 +495,19 @@ class GoodweET extends IPSModule
             }
         }
 
-        // MPPT-Tracker-Leistung: P = V_Tracker × (I_StringA + I_StringB)
-        // MPPT1=PV1+PV2, MPPT2=PV3+PV4, MPPT3=PV5+PV6
-        if ($this->ReadPropertyBoolean('EnableMPPT1') || $this->ReadPropertyBoolean('EnableMPPT2')) {
-            $vTracker1 = max($pv1V, $pv2V);
-            $this->SetVarFloat('mppt1_power', $vTracker1 * ($pv1I + $pv2I));
-        }
-        if ($this->ReadPropertyBoolean('EnableMPPT3') || $this->ReadPropertyBoolean('EnableMPPT4')) {
-            $vTracker2 = max($pv3V, $pv4V);
-            $this->SetVarFloat('mppt2_power', $vTracker2 * ($pv3I + $pv4I));
-        }
-        if ($this->ReadPropertyBoolean('EnableMPPT5') || $this->ReadPropertyBoolean('EnableMPPT6')) {
-            $vTracker3 = max($pv5V, $pv6V);
-            $this->SetVarFloat('mppt3_power', $vTracker3 * ($pv5I + $pv6I));
+        // MPPT-Tracker-Leistung: direkte Register (aus Users validierter
+        // Modbus-Instanz bestätigt) P MPPT1/2/3 = 35337/35338/35339,
+        // liegen im bereits gelesenen pvext-Block (Start 35301) bei Offset 36/37/38.
+        if ($pvext !== null) {
+            if ($this->ReadPropertyBoolean('EnableMPPT1') || $this->ReadPropertyBoolean('EnableMPPT2')) {
+                $this->SetVarFloat('mppt1_power', (float)$this->u16($pvext, 36));   // 35337
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT3') || $this->ReadPropertyBoolean('EnableMPPT4')) {
+                $this->SetVarFloat('mppt2_power', (float)$this->u16($pvext, 37));   // 35338
+            }
+            if ($this->ReadPropertyBoolean('EnableMPPT5') || $this->ReadPropertyBoolean('EnableMPPT6')) {
+                $this->SetVarFloat('mppt3_power', (float)$this->u16($pvext, 38));   // 35339
+            }
         }
 
         // Netz R/S/T (Inverter-AC) + Netzmodus + Inselerkennung
