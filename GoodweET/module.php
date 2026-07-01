@@ -476,18 +476,23 @@ class GoodweET extends IPSModule
             $this->SetVarFloat('pv6_current', $this->u16($pvext, 7) / 10.0);
         }
 
-        // MPPT-Tracker-Leistung: direkte Register (aus Users validierter
-        // Modbus-Instanz bestätigt) P MPPT1/2/3 = 35337/35338/35339,
-        // liegen im bereits gelesenen pvext-Block (Start 35301) bei Offset 36/37/38.
-        if ($pvext !== null) {
+        // MPPT-Tracker-Leistung: direkte Register P MPPT1/2/3 = 35337/38/39.
+        // GoodWe-Firmware-Quirk (live per MCP-Diagnose verifiziert, 2026-07-01):
+        // Requests, die BEI/NACH 35333 beginnen, liefern für 35338/35339 nur
+        // 0xFFFF — auch wenn der Bereich Teil eines größeren, früher
+        // startenden Blocks ist (der 41er-pvext-Block ab 35301 ist NICHT
+        // sicher). Requests ab 35332 oder früher liefern zuverlässig korrekte
+        // Werte (5/5 Wiederholungen bestätigt). Deshalb eigener kleiner Block.
+        $mpptBlk = $this->modbusRead($host, $port, $unitId, 35332, 8);
+        if ($mpptBlk !== null) {
             if ($this->ReadPropertyBoolean('EnableTracker1')) {
-                $this->SetVarFloat('mppt1_power', (float)$this->u16($pvext, 36));   // 35337
+                $this->SetVarFloat('mppt1_power', (float)$this->u16($mpptBlk, 5));   // 35337
             }
             if ($this->ReadPropertyBoolean('EnableTracker2')) {
-                $this->SetVarFloat('mppt2_power', (float)$this->u16($pvext, 37));   // 35338
+                $this->SetVarFloat('mppt2_power', (float)$this->u16($mpptBlk, 6));   // 35338
             }
             if ($this->ReadPropertyBoolean('EnableTracker3')) {
-                $this->SetVarFloat('mppt3_power', (float)$this->u16($pvext, 38));   // 35339
+                $this->SetVarFloat('mppt3_power', (float)$this->u16($mpptBlk, 7));   // 35339
             }
         }
 
